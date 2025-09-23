@@ -142,6 +142,7 @@ services:
       - '8080:8080'
     depends_on:
       - kafka
+    command: ["deno", "task", "start:read-server"]
     environment:
       KAFKA_BROKER: kafka:29092
 
