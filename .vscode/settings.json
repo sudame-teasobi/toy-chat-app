@@ -2,6 +2,13 @@
   "deno.enable": true,
   "eslint.enable": false,
   "prettier.enable": false,
+  "editor.codeLens": true,
+  "typescript.referencesCodeLens.enabled": false,
+  "typescript.implementationsCodeLens.enabled": false,
+  "deno.codeLens.implementations": true,
+  "deno.codeLens.references": true,
+  "deno.codeLens.referencesAllFunctions": true,
+  "deno.codeLens.test": true,
   "editor.defaultFormatter": "denoland.vscode-deno",
   "[json][jsonc][javascript][javascriptreact][typescript][typescriptreact][css]": {
     "editor.defaultFormatter": "denoland.vscode-deno"
@@ -9,7 +16,6 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.ts": "explicit",
 
-    "source.organizeImports": "explicit",
     "source.sortImports": "explicit",
 
     "source.addMissingImports.ts": "explicit",

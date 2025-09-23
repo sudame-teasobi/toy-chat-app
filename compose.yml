@@ -155,12 +155,14 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+    command: ["deno", "task", "start:write-server"]
     environment:
+      PORT: 8081
       DB_HOST: tidb-tidb
       DB_PORT: 4000
       DB_USER: root
       DB_PASSWORD: ''
-      DB_NAME: chotwork
+      DB_NAME: toy_chat_app
 
   ##########################################
   # 開発用ツール: 81xx番台のポートを使用
