@@ -1,0 +1,10 @@
+{
+  "tasks": {
+    "dev": "deno run --watch main.ts",
+    "compile:read-server": "deno compile -A -o ./bin/read-server ./read-server/main.ts",
+    "compile:command-server": "deno compile -A -o ./bin/command-server ./write-server/main.ts"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1"
+  }
+}

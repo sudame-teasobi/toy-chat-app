@@ -1,0 +1,18 @@
+{
+  "deno.enable": true,
+  "eslint.enable": false,
+  "prettier.enable": false,
+  "editor.defaultFormatter": "denoland.vscode-deno",
+  "[json][jsonc][javascript][javascriptreact][typescript][typescriptreact][css]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll.ts": "explicit",
+
+    "source.organizeImports": "explicit",
+    "source.sortImports": "explicit",
+
+    "source.addMissingImports.ts": "explicit",
+    "source.removeUnusedImports": "explicit"
+  }
+}
