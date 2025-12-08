@@ -1,0 +1,55 @@
+apiVersion: skaffold/v4beta13
+kind: Config
+metadata:
+  name: toy-chat-app
+
+build:
+  artifacts:
+    - image: write-server
+      docker:
+        dockerfile: ./dockerfiles/Dockerfile.write-server
+        noCache: false
+        pullParent: false
+        squash: false
+    - image: read-server
+      docker:
+        dockerfile: ./dockerfiles/Dockerfile.read-server
+        noCache: false
+        pullParent: false
+        squash: false
+  local:
+    push: false
+
+deploy:
+  helm:
+    releases:
+      - name: write-server
+        namespace: toy-chat-app
+        chartPath: ./helm/charts/app
+        valuesFiles:
+          - ./helm/values/local/write-server.yaml
+        recreatePods: false
+        skipBuildDependencies: false
+        useHelmSecrets: false
+        wait: false
+      - name: read-server
+        namespace: toy-chat-app
+        chartPath: ./helm/charts/app
+        valuesFiles:
+          - ./helm/values/local/read-server.yaml
+        recreatePods: false
+        skipBuildDependencies: false
+        useHelmSecrets: false
+        wait: false
+
+portForward:
+  - resourceName: write-server
+    resourceType: service
+    namespace: toy-chat-app
+    port: 8080
+    localPort: 8080
+  - resourceName: read-server
+    resourceType: service
+    namespace: toy-chat-app
+    port: 8080
+    localPort: 8081

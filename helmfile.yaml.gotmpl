@@ -9,7 +9,7 @@ repositories:
 releases:
   - name: dynamodb
     namespace: toy-chat-app
-    chart: ./charts/dynamodb
+    chart: ./helm/charts/dynamodb
 
   - name: tidb-operator
     namespace: toy-chat-app
@@ -18,7 +18,7 @@ releases:
 
   - name: tidb-cluster
     namespace: toy-chat-app
-    chart: ./charts/tidb
+    chart: ./helm/charts/tidb
 
   - name: strimzi-cluster-operator
     namespace: toy-chat-app
@@ -27,4 +27,4 @@ releases:
 
   - name: kafka-cluster
     namespace: toy-chat-app
-    chart: ./charts/kafka
+    chart: ./helm/charts/kafka

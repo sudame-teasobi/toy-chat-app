@@ -1,0 +1,10 @@
+FROM golang:1.25 AS build
+
+WORKDIR /app
+COPY . .
+RUN go build -o /write-server ./app/cmd/write-server
+
+FROM debian:12-slim
+COPY --from=build /write-server /write-server
+EXPOSE 8080
+CMD ["/write-server"]

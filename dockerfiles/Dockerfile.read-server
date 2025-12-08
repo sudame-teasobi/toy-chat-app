@@ -1,0 +1,10 @@
+FROM golang:1.25 AS build
+
+WORKDIR /app
+COPY . .
+RUN go build -o /read-server ./app/cmd/read-server
+
+FROM debian:12-slim
+COPY --from=build /read-server /read-server
+EXPOSE 8080
+CMD ["/read-server"]

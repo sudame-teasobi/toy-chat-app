@@ -1,0 +1,20 @@
+name: write-server
+
+replicaCount: 1
+
+image:
+  name: write-server
+  tag: latest
+  pullPolicy: Never
+
+service:
+  type: LoadBalancer
+  port: 8080
+
+resources:
+  requests:
+    memory: "64Mi"
+    cpu: "100m"
+  limits:
+    memory: "128Mi"
+    cpu: "200m"
