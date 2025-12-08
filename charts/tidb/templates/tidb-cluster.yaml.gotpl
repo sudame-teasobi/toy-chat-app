@@ -1,0 +1,50 @@
+# see: https://github.com/pingcap/tidb-operator/blob/b842e1a45cdc13c155601fcbdeda64ad8c04eaaf/examples/basic/tidb-cluster.yaml
+# see: https://github.com/pingcap/tidb-operator/blob/b842e1a45cdc13c155601fcbdeda64ad8c04eaaf/pkg/apis/pingcap/v1alpha1/types.go
+apiVersion: pingcap.com/v1alpha1
+kind: TidbCluster
+metadata:
+  name: {{ .Release.Name }}-tidb-cluster
+spec:
+  version: v8.5.3
+  timezone: UTC
+  pvReclaimPolicy: Retain
+  enableDynamicConfiguration: true
+  configUpdateStrategy: RollingUpdate
+  discovery: {}
+  helper:
+    image: alpine:3.16.0
+
+  pd:
+    baseImage: pingcap/pd
+    maxFailoverCount: {{ .Values.pd.maxFailoverCount }}
+    replicas: {{ .Values.pd.replicas }}
+    requests:
+      storage: {{ .Values.pd.requests.storage }}
+    config: {}
+
+  tikv:
+    baseImage: pingcap/tikv
+    maxFailoverCount: {{ .Values.tikv.maxFailoverCount }}
+    evictLeaderTimeout: {{ .Values.tikv.evictLeaderTimeout }}
+    replicas: {{ .Values.tikv.replicas }}
+    requests:
+      storage: {{ .Values.tikv.requests.storage }}
+    config:
+      storage:
+        reserve-space: {{ .Values.tikv.config.storage.reserveSpace }}
+      rocksdb:
+        max-open-files: {{ .Values.tikv.config.rocksdb.maxOpenFiles }}
+      raftdb:
+        max-open-files: {{ .Values.tikv.config.raftdb.maxOpenFiles }}
+
+  tidb:
+    baseImage: pingcap/tidb
+    maxFailoverCount: {{ .Values.tidb.maxFailoverCount }}
+    replicas: {{ .Values.tidb.replicas }}
+    service:
+      type: LoadBalancer
+    config: {}
+
+  ticdc:
+    baseImage: pingcap/ticdc
+    replicas: {{ .Values.ticdc.replicas }}

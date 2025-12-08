@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-dynamodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-dynamodb
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-dynamodb
+    spec:
+      containers:
+        - name: {{ .Release.Name }}-dynamodb
+          image: amazon/dynamodb-local
+          imagePullPolicy: IfNotPresent
+          args:
+            - "-jar"
+            - "DynamoDBLocal.jar"
+            - "-dbPath"
+            - "/home/dynamodb-local/data"
+            - "-sharedDb"
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - mountPath: /home/dynamodb-local/data
+              name: {{ .Release.Name }}-dynamodb-data
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory }}
+              cpu: {{ .Values.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.resources.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu }}
+      volumes:
+        - name: {{ .Release.Name }}-dynamodb-data
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-dynamodb-data

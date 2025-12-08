@@ -1,0 +1,30 @@
+environments:
+  local:
+  prod:
+---
+repositories:
+  - name: pingcap
+    url: https://charts.pingcap.org/
+
+releases:
+  - name: dynamodb
+    namespace: toy-chat-app
+    chart: ./charts/dynamodb
+
+  - name: tidb-operator
+    namespace: toy-chat-app
+    chart: pingcap/tidb-operator
+    version: 1.6.3
+
+  - name: tidb-cluster
+    namespace: toy-chat-app
+    chart: ./charts/tidb
+
+  - name: strimzi-cluster-operator
+    namespace: toy-chat-app
+    chart: oci://quay.io/strimzi-helm/strimzi-kafka-operator
+    version: 0.49.0
+
+  - name: kafka-cluster
+    namespace: toy-chat-app
+    chart: ./charts/kafka

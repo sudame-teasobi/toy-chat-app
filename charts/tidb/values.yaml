@@ -1,0 +1,29 @@
+pd:
+  maxFailoverCount: 0
+  replicas: 1
+  requests:
+    storage: 1Gi
+
+tikv:
+  maxFailoverCount: 0
+  evictLeaderTimeout: 1m
+  replicas: 1
+  requests:
+    storage: 1Gi
+  config:
+    storage:
+      reserve-space: 0MB
+    rocksdb:
+      max-open-files: 256
+    raftdb:
+      max-open-files: 256
+
+tidb:
+  maxFailoverCount: 0
+  replicas: 1
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+ticdc:
+  replicas: 1
