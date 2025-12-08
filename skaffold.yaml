@@ -28,6 +28,11 @@ deploy:
         chartPath: ./helm/charts/app
         valuesFiles:
           - ./helm/values/local/write-server.yaml
+        setValueTemplates:
+          name: write-server
+          image:
+            repository: "{{.IMAGE_REPO_write_server}}"
+            tag: "{{.IMAGE_TAG_write_server}}"
         recreatePods: false
         skipBuildDependencies: false
         useHelmSecrets: false
@@ -37,6 +42,11 @@ deploy:
         chartPath: ./helm/charts/app
         valuesFiles:
           - ./helm/values/local/read-server.yaml
+        setValueTemplates:
+          name: read-server
+          image:
+            repository: "{{.IMAGE_REPO_read_server}}"
+            tag: "{{.IMAGE_TAG_read_server}}"
         recreatePods: false
         skipBuildDependencies: false
         useHelmSecrets: false

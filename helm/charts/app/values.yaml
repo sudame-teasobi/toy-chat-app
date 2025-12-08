@@ -3,7 +3,7 @@ name: app
 replicaCount: 1
 
 image:
-  name: nginx
+  repository: nginx
   tag: latest
   pullPolicy: Never
 

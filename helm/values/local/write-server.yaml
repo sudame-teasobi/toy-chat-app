@@ -3,8 +3,9 @@ name: write-server
 replicaCount: 1
 
 image:
-  name: write-server
-  tag: latest
+  # skaffold で設定している
+  # repository:
+  # tag:
   pullPolicy: Never
 
 service:
