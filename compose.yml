@@ -49,6 +49,10 @@ services:
       timeout: 2s
       retries: 20
     restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
 
   tidb-tikv:
     image: pingcap/tikv:v8.5.2
