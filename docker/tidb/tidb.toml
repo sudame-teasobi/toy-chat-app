@@ -1,0 +1,4 @@
+[experimental]
+# Allow golang-migrate to work with TiDB
+# TiDB does not support SERIALIZABLE isolation level
+skip-isolation-level-check = true

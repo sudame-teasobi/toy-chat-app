@@ -9,8 +9,8 @@ services:
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://localhost:9092,CONTROLLER://localhost:9093,PLAINTEXT_INTERNAL://kafka:29092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,CONTROLLER://localhost:9093,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,PLAINTEXT_INTERNAL://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
@@ -29,7 +29,6 @@ services:
       interval: 10s # 10秒ごとにチェック
       timeout: 5s # タイムアウトは5秒
       retries: 15 # 15回リトライ (合計約150秒待つ)
-
   tidb-pd:
     image: pingcap/pd:v8.5.2
     ports:
@@ -78,6 +77,9 @@ services:
       - --store=tikv
       - --path=tidb-pd:2379
       - --advertise-address=tidb-tidb
+      - --config=/tidb.toml
+    volumes:
+      - ./docker/tidb/tidb.toml:/tidb.toml:ro
     ports:
       - '4000:4000' # MySQL 互換ポート
       - '10080:10080' # HTTP (ステータス/デバッグ)
@@ -134,36 +136,36 @@ services:
   ##########################################
   # Webアプリケーション: 80xx番台のポートを使用
   ##########################################
-  read-server:
-    build:
-      context: .
-      dockerfile: ./read-server/Dockerfile
-    ports:
-      - '8080:8080'
-    depends_on:
-      - kafka
-    command: ["deno", "task", "start:read-server"]
-    environment:
-      KAFKA_BROKER: kafka:29092
-
-  write-server:
-    build:
-      context: .
-      dockerfile: ./write-server/Dockerfile
-    ports:
-      - '8081:8081'
-      - '9229:9229' # デバッグ用ポート
-    depends_on:
-      kafka:
-        condition: service_healthy
-    command: ["deno", "task", "start:write-server"]
-    environment:
-      PORT: 8081
-      DB_HOST: tidb-tidb
-      DB_PORT: 4000
-      DB_USER: root
-      DB_PASSWORD: ''
-      DB_NAME: toy_chat_app
+  # read-server:
+  #   build:
+  #     context: .
+  #     dockerfile: ./read-server/Dockerfile
+  #   ports:
+  #     - '8080:8080'
+  #   depends_on:
+  #     - kafka
+  #   command: ["deno", "task", "start:read-server"]
+  #   environment:
+  #     KAFKA_BROKER: kafka:29092
+  #
+  # write-server:
+  #   build:
+  #     context: .
+  #     dockerfile: ./write-server/Dockerfile
+  #   ports:
+  #     - '8081:8081'
+  #     - '9229:9229' # デバッグ用ポート
+  #   depends_on:
+  #     kafka:
+  #       condition: service_healthy
+  # command: ["deno", "task", "start:write-server"]
+  #   environment:
+  #     PORT: 8081
+  #     DB_HOST: tidb-tidb
+  #     DB_PORT: 4000
+  #     DB_USER: root
+  #     DB_PASSWORD: ''
+  #     DB_NAME: toy_chat_app
 
   ##########################################
   # 開発用ツール: 81xx番台のポートを使用
