@@ -1,3 +1,4 @@
+// Package addchatroommember is a package.
 package addchatroommember
 
 import "context"
