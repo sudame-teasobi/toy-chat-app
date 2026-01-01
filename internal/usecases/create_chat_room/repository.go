@@ -1,4 +1,3 @@
-// Package createchatroom is a package.
 package createchatroom
 
 import (
@@ -8,6 +7,7 @@ import (
 	"github.com/sudame/chat/internal/models"
 )
 
+// Repository defines the persistence operations required by this usecase.
 type Repository interface {
 	CreateChatRoom(ctx context.Context, name string) (*models.ChatRoom, error)
 	AddMember(ctx context.Context, chatRoomID, userID int64) (*models.ChatRoomMember, error)
