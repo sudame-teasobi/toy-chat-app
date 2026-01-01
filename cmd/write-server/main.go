@@ -25,7 +25,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to open database: %v", err)
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("Failed to close database: %v", err)
+		}
+	}()
 
 	if err := db.Ping(); err != nil {
 		log.Fatalf("Failed to connect to TiDB: %v", err)
@@ -101,7 +105,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to Kafka: %v", err)
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Printf("Failed to close Kafka connection: %v", err)
+		}
+	}()
 
 	// Get broker info
 	brokers, err := conn.Brokers()
@@ -127,7 +135,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to Kafka controller: %v", err)
 	}
-	defer controllerConn.Close()
+	defer func() {
+		if err := controllerConn.Close(); err != nil {
+			log.Printf("Failed to close Kafka controller connection: %v", err)
+		}
+	}()
 
 	err = controllerConn.CreateTopics(kafka.TopicConfig{
 		Topic:             kafkaTopic,
@@ -146,7 +158,11 @@ func main() {
 		Balancer:     &kafka.LeastBytes{},
 		WriteTimeout: 10 * time.Second,
 	}
-	defer writer.Close()
+	defer func() {
+		if err := writer.Close(); err != nil {
+			log.Printf("Failed to close Kafka writer: %v", err)
+		}
+	}()
 
 	testMessage := fmt.Sprintf("Hello from write-server at %s", time.Now().Format(time.RFC3339))
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -170,12 +186,20 @@ func main() {
 		MaxBytes:  10e6,
 		MaxWait:   3 * time.Second,
 	})
-	defer reader.Close()
+	defer func() {
+		if err := reader.Close(); err != nil {
+			log.Printf("Failed to close Kafka reader: %v", err)
+		}
+	}()
 
 	// Seek to the latest offset minus 1 to read our message
-	reader.SetOffset(kafka.LastOffset)
+	if err := reader.SetOffset(kafka.LastOffset); err != nil {
+		log.Printf("Failed to set offset to LastOffset: %v", err)
+	}
 	// Read from beginning to find our message
-	reader.SetOffset(0)
+	if err := reader.SetOffset(0); err != nil {
+		log.Fatalf("Failed to set offset to 0: %v", err)
+	}
 
 	readCtx, readCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer readCancel()

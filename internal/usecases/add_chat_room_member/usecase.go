@@ -1,7 +1,12 @@
 // Package addchatroommember is a package.
 package addchatroommember
 
-import "context"
+import (
+	"context"
+
+	"github.com/sudame/chat/internal/events"
+	"github.com/sudame/chat/internal/models"
+)
 
 type Input struct {
 	ChatRoomID int64
@@ -9,7 +14,7 @@ type Input struct {
 }
 
 type Output struct {
-	Member *ChatRoomMember
+	Member *models.ChatRoomMember
 }
 
 type Usecase struct {
@@ -50,7 +55,7 @@ func (u *Usecase) Execute(ctx context.Context, input Input) (*Output, error) {
 		return nil, err
 	}
 
-	if err := u.repo.SaveEvent(ctx, &MemberAddedEvent{
+	if err := u.repo.SaveEvent(ctx, &events.MemberAddedEvent{
 		ChatRoomID: input.ChatRoomID,
 		UserID:     input.UserID,
 	}); err != nil {

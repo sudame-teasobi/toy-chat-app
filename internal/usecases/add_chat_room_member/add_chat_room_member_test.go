@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sudame/chat/internal/events"
+	"github.com/sudame/chat/internal/models"
 	addchatroommember "github.com/sudame/chat/internal/usecases/add_chat_room_member"
 )
 
@@ -12,8 +14,8 @@ type mockRepository struct {
 	userExists     bool
 	chatRoomExists bool
 	isMember       bool
-	addedMember    *addchatroommember.ChatRoomMember
-	savedEvents    []addchatroommember.Event
+	addedMember    *models.ChatRoomMember
+	savedEvents    []events.Event
 }
 
 func (m *mockRepository) UserExists(ctx context.Context, userID int64) (bool, error) {
@@ -28,8 +30,8 @@ func (m *mockRepository) IsMember(ctx context.Context, chatRoomID, userID int64)
 	return m.isMember, nil
 }
 
-func (m *mockRepository) AddMember(ctx context.Context, chatRoomID, userID int64) (*addchatroommember.ChatRoomMember, error) {
-	m.addedMember = &addchatroommember.ChatRoomMember{
+func (m *mockRepository) AddMember(ctx context.Context, chatRoomID, userID int64) (*models.ChatRoomMember, error) {
+	m.addedMember = &models.ChatRoomMember{
 		ID:         1,
 		ChatRoomID: chatRoomID,
 		UserID:     userID,
@@ -37,7 +39,7 @@ func (m *mockRepository) AddMember(ctx context.Context, chatRoomID, userID int64
 	return m.addedMember, nil
 }
 
-func (m *mockRepository) SaveEvent(ctx context.Context, event addchatroommember.Event) error {
+func (m *mockRepository) SaveEvent(ctx context.Context, event events.Event) error {
 	m.savedEvents = append(m.savedEvents, event)
 	return nil
 }
@@ -95,9 +97,9 @@ func TestAddChatRoomMember_MemberAddedイベントが発行される(t *testing.
 	}
 
 	// MemberAddedイベントが発行されているか確認
-	var foundEvent *addchatroommember.MemberAddedEvent
+	var foundEvent *events.MemberAddedEvent
 	for _, e := range repo.savedEvents {
-		if evt, ok := e.(*addchatroommember.MemberAddedEvent); ok {
+		if evt, ok := e.(*events.MemberAddedEvent); ok {
 			foundEvent = evt
 			break
 		}

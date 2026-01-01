@@ -1,4 +1,8 @@
-package addchatroommember
+package events
+
+type Event interface {
+	EventType() string
+}
 
 type MemberAddedEvent struct {
 	ChatRoomID int64

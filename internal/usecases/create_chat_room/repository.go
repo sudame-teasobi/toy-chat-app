@@ -1,22 +1,16 @@
 // Package createchatroom is a package.
 package createchatroom
 
-import "context"
+import (
+	"context"
 
-type ChatRoom struct {
-	ID   int64
-	Name string
-}
-
-type ChatRoomMember struct {
-	ID         int64
-	ChatRoomID int64
-	UserID     int64
-}
+	"github.com/sudame/chat/internal/events"
+	"github.com/sudame/chat/internal/models"
+)
 
 type Repository interface {
-	CreateChatRoom(ctx context.Context, name string) (*ChatRoom, error)
-	AddMember(ctx context.Context, chatRoomID, userID int64) (*ChatRoomMember, error)
+	CreateChatRoom(ctx context.Context, name string) (*models.ChatRoom, error)
+	AddMember(ctx context.Context, chatRoomID, userID int64) (*models.ChatRoomMember, error)
 	UserExists(ctx context.Context, userID int64) (bool, error)
-	SaveEvent(ctx context.Context, event Event) error
+	SaveEvent(ctx context.Context, event events.Event) error
 }

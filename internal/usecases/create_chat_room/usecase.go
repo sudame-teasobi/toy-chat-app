@@ -1,6 +1,11 @@
 package createchatroom
 
-import "context"
+import (
+	"context"
+
+	"github.com/sudame/chat/internal/events"
+	"github.com/sudame/chat/internal/models"
+)
 
 type Input struct {
 	Name      string
@@ -8,7 +13,7 @@ type Input struct {
 }
 
 type Output struct {
-	ChatRoom *ChatRoom
+	ChatRoom *models.ChatRoom
 }
 
 type Usecase struct {
@@ -49,7 +54,7 @@ func (u *Usecase) Execute(ctx context.Context, input Input) (*Output, error) {
 		return nil, err
 	}
 
-	if err := u.repo.SaveEvent(ctx, &MemberAddedEvent{
+	if err := u.repo.SaveEvent(ctx, &events.MemberAddedEvent{
 		ChatRoomID: room.ID,
 		UserID:     input.CreatorID,
 	}); err != nil {

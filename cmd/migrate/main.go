@@ -35,7 +35,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create migrate instance: %v", err)
 	}
-	defer m.Close()
+	defer func() {
+		if _, err := m.Close(); err != nil {
+			log.Printf("Failed to close migrate instance: %v", err)
+		}
+	}()
 
 	switch *command {
 	case "up":

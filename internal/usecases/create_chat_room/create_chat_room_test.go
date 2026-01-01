@@ -4,27 +4,29 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sudame/chat/internal/events"
+	"github.com/sudame/chat/internal/models"
 	createchatroom "github.com/sudame/chat/internal/usecases/create_chat_room"
 )
 
 // モックリポジトリ
 type mockChatRoomRepository struct {
-	createdRoom   *createchatroom.ChatRoom
-	createdMember *createchatroom.ChatRoomMember
+	createdRoom   *models.ChatRoom
+	createdMember *models.ChatRoomMember
 	userExists    bool
-	savedEvents   []createchatroom.Event
+	savedEvents   []events.Event
 }
 
-func (m *mockChatRoomRepository) CreateChatRoom(ctx context.Context, name string) (*createchatroom.ChatRoom, error) {
-	m.createdRoom = &createchatroom.ChatRoom{
+func (m *mockChatRoomRepository) CreateChatRoom(ctx context.Context, name string) (*models.ChatRoom, error) {
+	m.createdRoom = &models.ChatRoom{
 		ID:   1,
 		Name: name,
 	}
 	return m.createdRoom, nil
 }
 
-func (m *mockChatRoomRepository) AddMember(ctx context.Context, chatRoomID, userID int64) (*createchatroom.ChatRoomMember, error) {
-	m.createdMember = &createchatroom.ChatRoomMember{
+func (m *mockChatRoomRepository) AddMember(ctx context.Context, chatRoomID, userID int64) (*models.ChatRoomMember, error) {
+	m.createdMember = &models.ChatRoomMember{
 		ID:         1,
 		ChatRoomID: chatRoomID,
 		UserID:     userID,
@@ -36,7 +38,7 @@ func (m *mockChatRoomRepository) UserExists(ctx context.Context, userID int64) (
 	return m.userExists, nil
 }
 
-func (m *mockChatRoomRepository) SaveEvent(ctx context.Context, event createchatroom.Event) error {
+func (m *mockChatRoomRepository) SaveEvent(ctx context.Context, event events.Event) error {
 	m.savedEvents = append(m.savedEvents, event)
 	return nil
 }
@@ -184,9 +186,9 @@ func TestCreateChatRoom_MemberAddedイベントが発行される(t *testing.T) 
 	}
 
 	// MemberAddedイベントが発行されているか確認
-	var foundEvent *createchatroom.MemberAddedEvent
+	var foundEvent *events.MemberAddedEvent
 	for _, e := range repo.savedEvents {
-		if evt, ok := e.(*createchatroom.MemberAddedEvent); ok {
+		if evt, ok := e.(*events.MemberAddedEvent); ok {
 			foundEvent = evt
 			break
 		}
