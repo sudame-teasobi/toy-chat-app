@@ -4,54 +4,41 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sudame/chat/internal/events"
-	"github.com/sudame/chat/internal/models"
+	"github.com/sudame/chat/internal/domain/chatroom"
 	addchatroommember "github.com/sudame/chat/internal/usecases/add_chat_room_member"
 )
 
 // モックリポジトリ
-type mockRepository struct {
-	userExists     bool
-	chatRoomExists bool
-	isMember       bool
-	addedMember    *models.ChatRoomMember
-	savedEvents    []events.Event
+type mockChatRoomRepository struct {
+	room      *chatroom.ChatRoom
+	savedRoom *chatroom.ChatRoom
 }
 
-func (m *mockRepository) UserExists(ctx context.Context, userID int64) (bool, error) {
-	return m.userExists, nil
+func (m *mockChatRoomRepository) FindByID(ctx context.Context, id int64) (*chatroom.ChatRoom, error) {
+	return m.room, nil
 }
 
-func (m *mockRepository) ChatRoomExists(ctx context.Context, chatRoomID int64) (bool, error) {
-	return m.chatRoomExists, nil
-}
-
-func (m *mockRepository) IsMember(ctx context.Context, chatRoomID, userID int64) (bool, error) {
-	return m.isMember, nil
-}
-
-func (m *mockRepository) AddMember(ctx context.Context, chatRoomID, userID int64) (*models.ChatRoomMember, error) {
-	m.addedMember = &models.ChatRoomMember{
-		ID:         1,
-		ChatRoomID: chatRoomID,
-		UserID:     userID,
-	}
-	return m.addedMember, nil
-}
-
-func (m *mockRepository) SaveEvent(ctx context.Context, event events.Event) error {
-	m.savedEvents = append(m.savedEvents, event)
+func (m *mockChatRoomRepository) Save(ctx context.Context, room *chatroom.ChatRoom) error {
+	m.savedRoom = room
 	return nil
+}
+
+type mockUserRepository struct {
+	userExists bool
+}
+
+func (m *mockUserRepository) UserExists(ctx context.Context, userID int64) (bool, error) {
+	return m.userExists, nil
 }
 
 func TestAddChatRoomMember_正常にメンバーを追加できる(t *testing.T) {
 	// Arrange
-	repo := &mockRepository{
-		userExists:     true,
-		chatRoomExists: true,
-		isMember:       false,
-	}
-	usecase := addchatroommember.NewUsecase(repo)
+	existingRoom := chatroom.ReconstructChatRoom(1, "テストルーム", []chatroom.Member{
+		chatroom.ReconstructMember(1, 100), // 既存メンバー
+	})
+	chatRoomRepo := &mockChatRoomRepository{room: existingRoom}
+	userRepo := &mockUserRepository{userExists: true}
+	usecase := addchatroommember.NewUsecase(chatRoomRepo, userRepo)
 	input := addchatroommember.Input{
 		ChatRoomID: 1,
 		UserID:     42,
@@ -64,42 +51,36 @@ func TestAddChatRoomMember_正常にメンバーを追加できる(t *testing.T)
 	if err != nil {
 		t.Fatalf("予期しないエラー: %v", err)
 	}
-	if output.Member == nil {
-		t.Fatal("メンバーが返されていません")
-	}
-	if output.Member.ChatRoomID != 1 {
-		t.Errorf("ChatRoomIDが一致しません: got %d, want %d", output.Member.ChatRoomID, 1)
-	}
-	if output.Member.UserID != 42 {
-		t.Errorf("UserIDが一致しません: got %d, want %d", output.Member.UserID, 42)
+	if !output.ChatRoom.IsMember(42) {
+		t.Error("メンバーが追加されていません")
 	}
 }
 
 func TestAddChatRoomMember_MemberAddedイベントが発行される(t *testing.T) {
 	// Arrange
-	repo := &mockRepository{
-		userExists:     true,
-		chatRoomExists: true,
-		isMember:       false,
-	}
-	usecase := addchatroommember.NewUsecase(repo)
+	existingRoom := chatroom.ReconstructChatRoom(1, "テストルーム", []chatroom.Member{
+		chatroom.ReconstructMember(1, 100),
+	})
+	chatRoomRepo := &mockChatRoomRepository{room: existingRoom}
+	userRepo := &mockUserRepository{userExists: true}
+	usecase := addchatroommember.NewUsecase(chatRoomRepo, userRepo)
 	input := addchatroommember.Input{
 		ChatRoomID: 1,
 		UserID:     42,
 	}
 
 	// Act
-	_, err := usecase.Execute(context.Background(), input)
+	output, err := usecase.Execute(context.Background(), input)
 
 	// Assert
 	if err != nil {
 		t.Fatalf("予期しないエラー: %v", err)
 	}
 
-	// MemberAddedイベントが発行されているか確認
-	var foundEvent *events.MemberAddedEvent
-	for _, e := range repo.savedEvents {
-		if evt, ok := e.(*events.MemberAddedEvent); ok {
+	events := output.ChatRoom.Events()
+	var foundEvent *chatroom.MemberAddedEvent
+	for _, e := range events {
+		if evt, ok := e.(*chatroom.MemberAddedEvent); ok {
 			foundEvent = evt
 			break
 		}
@@ -117,12 +98,10 @@ func TestAddChatRoomMember_MemberAddedイベントが発行される(t *testing.
 
 func TestAddChatRoomMember_存在しないユーザーを追加できない(t *testing.T) {
 	// Arrange
-	repo := &mockRepository{
-		userExists:     false,
-		chatRoomExists: true,
-		isMember:       false,
-	}
-	usecase := addchatroommember.NewUsecase(repo)
+	existingRoom := chatroom.ReconstructChatRoom(1, "テストルーム", []chatroom.Member{})
+	chatRoomRepo := &mockChatRoomRepository{room: existingRoom}
+	userRepo := &mockUserRepository{userExists: false}
+	usecase := addchatroommember.NewUsecase(chatRoomRepo, userRepo)
 	input := addchatroommember.Input{
 		ChatRoomID: 1,
 		UserID:     999,
@@ -142,12 +121,9 @@ func TestAddChatRoomMember_存在しないユーザーを追加できない(t *t
 
 func TestAddChatRoomMember_存在しないチャットルームに追加できない(t *testing.T) {
 	// Arrange
-	repo := &mockRepository{
-		userExists:     true,
-		chatRoomExists: false,
-		isMember:       false,
-	}
-	usecase := addchatroommember.NewUsecase(repo)
+	chatRoomRepo := &mockChatRoomRepository{room: nil} // ルームが存在しない
+	userRepo := &mockUserRepository{userExists: true}
+	usecase := addchatroommember.NewUsecase(chatRoomRepo, userRepo)
 	input := addchatroommember.Input{
 		ChatRoomID: 999,
 		UserID:     1,
@@ -167,12 +143,12 @@ func TestAddChatRoomMember_存在しないチャットルームに追加でき�
 
 func TestAddChatRoomMember_すでにメンバーの場合は追加できない(t *testing.T) {
 	// Arrange
-	repo := &mockRepository{
-		userExists:     true,
-		chatRoomExists: true,
-		isMember:       true,
-	}
-	usecase := addchatroommember.NewUsecase(repo)
+	existingRoom := chatroom.ReconstructChatRoom(1, "テストルーム", []chatroom.Member{
+		chatroom.ReconstructMember(1, 42), // 既にメンバー
+	})
+	chatRoomRepo := &mockChatRoomRepository{room: existingRoom}
+	userRepo := &mockUserRepository{userExists: true}
+	usecase := addchatroommember.NewUsecase(chatRoomRepo, userRepo)
 	input := addchatroommember.Input{
 		ChatRoomID: 1,
 		UserID:     42,
@@ -185,7 +161,7 @@ func TestAddChatRoomMember_すでにメンバーの場合は追加できない(t
 	if err == nil {
 		t.Fatal("エラーが発生するはずですが、発生しませんでした")
 	}
-	if err != addchatroommember.ErrAlreadyMember {
-		t.Errorf("エラーが一致しません: got %v, want %v", err, addchatroommember.ErrAlreadyMember)
+	if err != chatroom.ErrAlreadyMember {
+		t.Errorf("エラーが一致しません: got %v, want %v", err, chatroom.ErrAlreadyMember)
 	}
 }

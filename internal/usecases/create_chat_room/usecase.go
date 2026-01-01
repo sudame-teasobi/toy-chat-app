@@ -3,8 +3,7 @@ package createchatroom
 import (
 	"context"
 
-	"github.com/sudame/chat/internal/events"
-	"github.com/sudame/chat/internal/models"
+	"github.com/sudame/chat/internal/domain/chatroom"
 )
 
 type Input struct {
@@ -13,23 +12,24 @@ type Input struct {
 }
 
 type Output struct {
-	ChatRoom *models.ChatRoom
+	ChatRoom *chatroom.ChatRoom
 }
 
 type Usecase struct {
-	repo Repository
+	chatRoomRepo chatroom.Repository
+	userRepo     UserRepository
 }
 
-func NewUsecase(repo Repository) *Usecase {
-	return &Usecase{repo: repo}
+func NewUsecase(chatRoomRepo chatroom.Repository, userRepo UserRepository) *Usecase {
+	return &Usecase{
+		chatRoomRepo: chatRoomRepo,
+		userRepo:     userRepo,
+	}
 }
 
 func (u *Usecase) Execute(ctx context.Context, input Input) (*Output, error) {
-	if input.Name == "" {
-		return nil, ErrEmptyName
-	}
-
-	exists, err := u.repo.UserExists(ctx, input.CreatorID)
+	// 1. ユーザー存在確認（別の集約なので外部リポジトリ）
+	exists, err := u.userRepo.UserExists(ctx, input.CreatorID)
 	if err != nil {
 		return nil, err
 	}
@@ -37,27 +37,14 @@ func (u *Usecase) Execute(ctx context.Context, input Input) (*Output, error) {
 		return nil, ErrUserNotFound
 	}
 
-	room, err := u.repo.CreateChatRoom(ctx, input.Name)
+	// 2. 集約を生成（ビジネスロジックは集約内）
+	room, err := chatroom.NewChatRoom(0, input.Name, input.CreatorID)
 	if err != nil {
-		return nil, err
+		return nil, err // ErrEmptyName from domain
 	}
 
-	if err := u.repo.SaveEvent(ctx, &ChatRoomCreatedEvent{
-		ChatRoomID: room.ID,
-		Name:       room.Name,
-	}); err != nil {
-		return nil, err
-	}
-
-	_, err = u.repo.AddMember(ctx, room.ID, input.CreatorID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := u.repo.SaveEvent(ctx, &events.MemberAddedEvent{
-		ChatRoomID: room.ID,
-		UserID:     input.CreatorID,
-	}); err != nil {
+	// 3. 集約を保存
+	if err := u.chatRoomRepo.Save(ctx, room); err != nil {
 		return nil, err
 	}
 

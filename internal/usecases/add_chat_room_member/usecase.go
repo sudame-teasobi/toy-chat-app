@@ -1,11 +1,9 @@
-// Package addchatroommember is a package.
 package addchatroommember
 
 import (
 	"context"
 
-	"github.com/sudame/chat/internal/events"
-	"github.com/sudame/chat/internal/models"
+	"github.com/sudame/chat/internal/domain/chatroom"
 )
 
 type Input struct {
@@ -14,19 +12,24 @@ type Input struct {
 }
 
 type Output struct {
-	Member *models.ChatRoomMember
+	ChatRoom *chatroom.ChatRoom
 }
 
 type Usecase struct {
-	repo Repository
+	chatRoomRepo chatroom.Repository
+	userRepo     UserRepository
 }
 
-func NewUsecase(repo Repository) *Usecase {
-	return &Usecase{repo: repo}
+func NewUsecase(chatRoomRepo chatroom.Repository, userRepo UserRepository) *Usecase {
+	return &Usecase{
+		chatRoomRepo: chatRoomRepo,
+		userRepo:     userRepo,
+	}
 }
 
 func (u *Usecase) Execute(ctx context.Context, input Input) (*Output, error) {
-	exists, err := u.repo.UserExists(ctx, input.UserID)
+	// 1. ユーザー存在確認
+	exists, err := u.userRepo.UserExists(ctx, input.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -34,33 +37,24 @@ func (u *Usecase) Execute(ctx context.Context, input Input) (*Output, error) {
 		return nil, ErrUserNotFound
 	}
 
-	roomExists, err := u.repo.ChatRoomExists(ctx, input.ChatRoomID)
+	// 2. 集約をロード
+	room, err := u.chatRoomRepo.FindByID(ctx, input.ChatRoomID)
 	if err != nil {
 		return nil, err
 	}
-	if !roomExists {
+	if room == nil {
 		return nil, ErrChatRoomNotFound
 	}
 
-	isMember, err := u.repo.IsMember(ctx, input.ChatRoomID, input.UserID)
-	if err != nil {
-		return nil, err
-	}
-	if isMember {
-		return nil, ErrAlreadyMember
+	// 3. 集約にビジネスロジックを実行
+	if err := room.AddMember(input.UserID); err != nil {
+		return nil, err // ErrAlreadyMember from domain
 	}
 
-	member, err := u.repo.AddMember(ctx, input.ChatRoomID, input.UserID)
-	if err != nil {
+	// 4. 集約を保存
+	if err := u.chatRoomRepo.Save(ctx, room); err != nil {
 		return nil, err
 	}
 
-	if err := u.repo.SaveEvent(ctx, &events.MemberAddedEvent{
-		ChatRoomID: input.ChatRoomID,
-		UserID:     input.UserID,
-	}); err != nil {
-		return nil, err
-	}
-
-	return &Output{Member: member}, nil
+	return &Output{ChatRoom: room}, nil
 }
