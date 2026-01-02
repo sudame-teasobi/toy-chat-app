@@ -6,6 +6,19 @@ type User struct {
 	name string
 }
 
+func NewUser(id int64, name string) (*User, error) {
+	if name == "" {
+		return nil, ErrEmptyName
+	}
+
+	usr := &User{
+		id:   id,
+		name: name,
+	}
+
+	return usr, nil
+}
+
 // ReconstructChatRoom reconstructs a ChatRoom from persistence.
 func ReconstructUser(id int64, name string) *User {
 	return &User{
