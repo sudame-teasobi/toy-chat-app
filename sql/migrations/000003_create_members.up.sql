@@ -1,8 +1,8 @@
 
 CREATE TABLE IF NOT EXISTS chat_room_members (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  user_id BIGINT NOT NULL,
-  chat_room_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  user_id CHAR(26) NOT NULL,
+  chat_room_id CHAR(26) NOT NULL,
   FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (chat_room_id) REFERENCES chat_rooms(id),
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
