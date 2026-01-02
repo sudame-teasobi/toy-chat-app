@@ -9,7 +9,7 @@ import (
 
 type CreateChatRoomInput struct {
 	Name      string
-	CreatorID int64
+	CreatorID string
 }
 
 type CreateChatRoomOutput struct {
@@ -36,7 +36,7 @@ func (u *CreateChatRoomUsecase) Execute(ctx context.Context, input CreateChatRoo
 	}
 
 	// 2. 集約を生成（ビジネスロジックは集約内）
-	room, err := chatroom.NewChatRoom(0, input.Name, input.CreatorID)
+	room, err := chatroom.NewChatRoom(input.Name, input.CreatorID)
 	if err != nil {
 		return nil, err // ErrEmptyName from domain
 	}

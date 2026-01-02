@@ -1,10 +1,13 @@
 package chatroom
 
-import "github.com/sudame/chat/internal/events"
+import (
+	"github.com/oklog/ulid/v2"
+	"github.com/sudame/chat/internal/events"
+)
 
 // ChatRoom is the aggregate root for chat room domain.
 type ChatRoom struct {
-	id      int64
+	id      string
 	name    string
 	members []Member
 	events  []events.Event
@@ -13,7 +16,9 @@ type ChatRoom struct {
 // NewChatRoom creates a new ChatRoom aggregate.
 // It validates the name, adds the creator as the first member,
 // and records ChatRoomCreatedEvent and MemberAddedEvent.
-func NewChatRoom(id int64, name string, creatorUserID int64) (*ChatRoom, error) {
+func NewChatRoom(name string, creatorUserID string) (*ChatRoom, error) {
+	id := ulid.Make().String()
+
 	if name == "" {
 		return nil, ErrEmptyName
 	}
@@ -38,7 +43,7 @@ func NewChatRoom(id int64, name string, creatorUserID int64) (*ChatRoom, error) 
 }
 
 // ReconstructChatRoom reconstructs a ChatRoom from persistence.
-func ReconstructChatRoom(id int64, name string, members []Member) *ChatRoom {
+func ReconstructChatRoom(id string, name string, members []Member) *ChatRoom {
 	return &ChatRoom{
 		id:      id,
 		name:    name,
@@ -48,7 +53,7 @@ func ReconstructChatRoom(id int64, name string, members []Member) *ChatRoom {
 }
 
 // AddMember adds a new member to the chat room.
-func (cr *ChatRoom) AddMember(userID int64) error {
+func (cr *ChatRoom) AddMember(userID string) error {
 	if cr.IsMember(userID) {
 		return ErrAlreadyMember
 	}
@@ -63,7 +68,7 @@ func (cr *ChatRoom) AddMember(userID int64) error {
 }
 
 // IsMember checks if the user is already a member.
-func (cr *ChatRoom) IsMember(userID int64) bool {
+func (cr *ChatRoom) IsMember(userID string) bool {
 	for _, m := range cr.members {
 		if m.UserID() == userID {
 			return true
@@ -72,8 +77,8 @@ func (cr *ChatRoom) IsMember(userID int64) bool {
 	return false
 }
 
-func (cr *ChatRoom) ID() int64        { return cr.id }
-func (cr *ChatRoom) Name() string     { return cr.name }
+func (cr *ChatRoom) ID() string   { return cr.id }
+func (cr *ChatRoom) Name() string { return cr.name }
 func (cr *ChatRoom) Members() []Member {
 	result := make([]Member, len(cr.members))
 	copy(result, cr.members)

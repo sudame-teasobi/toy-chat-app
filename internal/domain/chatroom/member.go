@@ -2,19 +2,19 @@ package chatroom
 
 // Member represents a chat room member.
 type Member struct {
-	id     int64
-	userID int64
+	id     string
+	userID string
 }
 
 // NewMember creates a new member.
-func NewMember(userID int64) Member {
+func NewMember(userID string) Member {
 	return Member{userID: userID}
 }
 
 // ReconstructMember reconstructs a member from persistence.
-func ReconstructMember(id, userID int64) Member {
+func ReconstructMember(id, userID string) Member {
 	return Member{id: id, userID: userID}
 }
 
-func (m Member) ID() int64     { return m.id }
-func (m Member) UserID() int64 { return m.userID }
+func (m Member) ID() string     { return m.id }
+func (m Member) UserID() string { return m.userID }

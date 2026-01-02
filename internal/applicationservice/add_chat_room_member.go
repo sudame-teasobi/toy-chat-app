@@ -8,8 +8,8 @@ import (
 )
 
 type AddChatRoomMemberInput struct {
-	ChatRoomID int64
-	UserID     int64
+	ChatRoomID string
+	UserID     string
 }
 
 type AddChatRoomMemberOutput struct {

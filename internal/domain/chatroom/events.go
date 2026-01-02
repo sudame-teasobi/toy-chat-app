@@ -1,6 +1,8 @@
 package chatroom
 
-import "github.com/sudame/chat/internal/events"
+import (
+	"github.com/sudame/chat/internal/events"
+)
 
 var (
 	_ events.Event = (*ChatRoomCreatedEvent)(nil)
@@ -9,7 +11,7 @@ var (
 
 // ChatRoomCreatedEvent is raised when a chat room is created.
 type ChatRoomCreatedEvent struct {
-	ChatRoomID int64
+	ChatRoomID string
 	Name       string
 }
 
@@ -19,8 +21,8 @@ func (e *ChatRoomCreatedEvent) EventType() string {
 
 // MemberAddedEvent is raised when a member is added to a chat room.
 type MemberAddedEvent struct {
-	ChatRoomID int64
-	UserID     int64
+	ChatRoomID string
+	UserID     string
 }
 
 func (e *MemberAddedEvent) EventType() string {

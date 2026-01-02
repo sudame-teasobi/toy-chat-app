@@ -6,7 +6,7 @@ var _ events.Event = (*UserCreatedEvent)(nil)
 
 // UserCreatedEvent raised when a useris created.
 type UserCreatedEvent struct {
-	UserID int64
+	UserID string
 	Name   string
 }
 

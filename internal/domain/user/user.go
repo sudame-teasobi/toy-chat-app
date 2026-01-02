@@ -4,12 +4,12 @@ import "github.com/sudame/chat/internal/events"
 
 // User is the aggregate root for user domain.
 type User struct {
-	id     int64
+	id     string
 	name   string
 	events []events.Event
 }
 
-func NewUser(id int64, name string) (*User, error) {
+func NewUser(id string, name string) (*User, error) {
 	if name == "" {
 		return nil, ErrEmptyName
 	}
@@ -29,13 +29,13 @@ func NewUser(id int64, name string) (*User, error) {
 }
 
 // ReconstructChatRoom reconstructs a ChatRoom from persistence.
-func ReconstructUser(id int64, name string) *User {
+func ReconstructUser(id string, name string) *User {
 	return &User{
 		id:   id,
 		name: name,
 	}
 }
 
-func (u *User) ID() int64              { return u.id }
+func (u *User) ID() string             { return u.id }
 func (u *User) Name() string           { return u.name }
 func (u *User) Events() []events.Event { return u.events }

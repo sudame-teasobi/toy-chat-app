@@ -13,7 +13,7 @@ type mockChatRoomRepository struct {
 	savedRoom *chatroom.ChatRoom
 }
 
-func (m *mockChatRoomRepository) FindByID(ctx context.Context, id int64) (*chatroom.ChatRoom, error) {
+func (m *mockChatRoomRepository) FindByID(ctx context.Context, id string) (*chatroom.ChatRoom, error) {
 	if m.room == nil {
 		return nil, chatroom.ErrNotFound
 	}
@@ -31,7 +31,7 @@ type mockUserRepository struct {
 	savedUser *user.User
 }
 
-func (m *mockUserRepository) FindByID(ctx context.Context, id int64) (*user.User, error) {
+func (m *mockUserRepository) FindByID(ctx context.Context, id string) (*user.User, error) {
 	if m.user == nil {
 		return nil, user.ErrNotFound
 	}
