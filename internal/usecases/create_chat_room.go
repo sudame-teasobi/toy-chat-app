@@ -1,40 +1,38 @@
-package createchatroom
+package usecases
 
 import (
 	"context"
 
 	"github.com/sudame/chat/internal/domain/chatroom"
+	"github.com/sudame/chat/internal/domain/user"
 )
 
-type Input struct {
+type CreateChatRoomInput struct {
 	Name      string
 	CreatorID int64
 }
 
-type Output struct {
+type CreateChatRoomOutput struct {
 	ChatRoom *chatroom.ChatRoom
 }
 
-type Usecase struct {
+type CreateChatRoomUsecase struct {
 	chatRoomRepo chatroom.Repository
-	userRepo     UserRepository
+	userRepo     user.Repository
 }
 
-func NewUsecase(chatRoomRepo chatroom.Repository, userRepo UserRepository) *Usecase {
-	return &Usecase{
+func NewCreateChatRoomUsecase(chatRoomRepo chatroom.Repository, userRepo user.Repository) *CreateChatRoomUsecase {
+	return &CreateChatRoomUsecase{
 		chatRoomRepo: chatRoomRepo,
 		userRepo:     userRepo,
 	}
 }
 
-func (u *Usecase) Execute(ctx context.Context, input Input) (*Output, error) {
+func (u *CreateChatRoomUsecase) Execute(ctx context.Context, input CreateChatRoomInput) (*CreateChatRoomOutput, error) {
 	// 1. ユーザー存在確認（別の集約なので外部リポジトリ）
-	exists, err := u.userRepo.UserExists(ctx, input.CreatorID)
+	_, err := u.userRepo.FindByID(ctx, input.CreatorID)
 	if err != nil {
 		return nil, err
-	}
-	if !exists {
-		return nil, ErrUserNotFound
 	}
 
 	// 2. 集約を生成（ビジネスロジックは集約内）
@@ -48,5 +46,5 @@ func (u *Usecase) Execute(ctx context.Context, input Input) (*Output, error) {
 		return nil, err
 	}
 
-	return &Output{ChatRoom: room}, nil
+	return &CreateChatRoomOutput{ChatRoom: room}, nil
 }
