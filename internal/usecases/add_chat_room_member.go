@@ -1,40 +1,41 @@
-package addchatroommember
+package usecases
 
 import (
 	"context"
 
 	"github.com/sudame/chat/internal/domain/chatroom"
+	"github.com/sudame/chat/internal/domain/user"
 )
 
-type Input struct {
+type AddChatRoomMemberInput struct {
 	ChatRoomID int64
 	UserID     int64
 }
 
-type Output struct {
+type AddChatRoomMemberOutput struct {
 	ChatRoom *chatroom.ChatRoom
 }
 
-type Usecase struct {
+type AddChatRoomMemberUsecase struct {
 	chatRoomRepo chatroom.Repository
-	userRepo     UserRepository
+	userRepo     user.Repository
 }
 
-func NewUsecase(chatRoomRepo chatroom.Repository, userRepo UserRepository) *Usecase {
-	return &Usecase{
+func NewAddChatRoomMemberUsecase(chatRoomRepo chatroom.Repository, userRepo user.Repository) *AddChatRoomMemberUsecase {
+	return &AddChatRoomMemberUsecase{
 		chatRoomRepo: chatRoomRepo,
 		userRepo:     userRepo,
 	}
 }
 
-func (u *Usecase) Execute(ctx context.Context, input Input) (*Output, error) {
+func (u *AddChatRoomMemberUsecase) Execute(ctx context.Context, input AddChatRoomMemberInput) (*AddChatRoomMemberOutput, error) {
 	// 1. ユーザー存在確認
-	exists, err := u.userRepo.UserExists(ctx, input.UserID)
+	usr, err := u.userRepo.FindByID(ctx, input.UserID)
 	if err != nil {
 		return nil, err
 	}
-	if !exists {
-		return nil, ErrUserNotFound
+	if usr == nil {
+		return nil, user.ErrNotFound
 	}
 
 	// 2. 集約をロード
@@ -43,7 +44,7 @@ func (u *Usecase) Execute(ctx context.Context, input Input) (*Output, error) {
 		return nil, err
 	}
 	if room == nil {
-		return nil, ErrChatRoomNotFound
+		return nil, chatroom.ErrNotFound
 	}
 
 	// 3. 集約にビジネスロジックを実行
@@ -56,5 +57,5 @@ func (u *Usecase) Execute(ctx context.Context, input Input) (*Output, error) {
 		return nil, err
 	}
 
-	return &Output{ChatRoom: room}, nil
+	return &AddChatRoomMemberOutput{ChatRoom: room}, nil
 }
