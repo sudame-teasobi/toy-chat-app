@@ -1,12 +1,12 @@
-package usecases_test
+package applicationservice_test
 
 import (
 	"context"
 	"testing"
 
+	"github.com/sudame/chat/internal/applicationservice"
 	"github.com/sudame/chat/internal/domain/chatroom"
 	"github.com/sudame/chat/internal/domain/user"
-	"github.com/sudame/chat/internal/usecases"
 )
 
 func TestAddChatRoomMember_正常にメンバーを追加できる(t *testing.T) {
@@ -17,8 +17,8 @@ func TestAddChatRoomMember_正常にメンバーを追加できる(t *testing.T)
 	existingUser := user.ReconstructUser(1, "テストユーザー")
 	chatRoomRepo := &mockChatRoomRepository{room: existingRoom}
 	userRepo := &mockUserRepository{user: existingUser}
-	usecase := usecases.NewAddChatRoomMemberUsecase(chatRoomRepo, userRepo)
-	input := usecases.AddChatRoomMemberInput{
+	usecase := applicationservice.NewAddChatRoomMemberUsecase(chatRoomRepo, userRepo)
+	input := applicationservice.AddChatRoomMemberInput{
 		ChatRoomID: 1,
 		UserID:     42,
 	}
@@ -42,8 +42,8 @@ func TestAddChatRoomMember_MemberAddedイベントが発行される(t *testing.
 	chatRoomRepo := &mockChatRoomRepository{room: existingRoom}
 	existingUser := user.ReconstructUser(1, "テストユーザー")
 	userRepo := &mockUserRepository{user: existingUser}
-	usecase := usecases.NewAddChatRoomMemberUsecase(chatRoomRepo, userRepo)
-	input := usecases.AddChatRoomMemberInput{
+	usecase := applicationservice.NewAddChatRoomMemberUsecase(chatRoomRepo, userRepo)
+	input := applicationservice.AddChatRoomMemberInput{
 		ChatRoomID: 1,
 		UserID:     42,
 	}
@@ -79,8 +79,8 @@ func TestAddChatRoomMember_存在しないユーザーを追加できない(t *t
 	existingRoom := chatroom.ReconstructChatRoom(1, "テストルーム", []chatroom.Member{})
 	chatRoomRepo := &mockChatRoomRepository{room: existingRoom}
 	userRepo := &mockUserRepository{user: nil}
-	usecase := usecases.NewAddChatRoomMemberUsecase(chatRoomRepo, userRepo)
-	input := usecases.AddChatRoomMemberInput{
+	usecase := applicationservice.NewAddChatRoomMemberUsecase(chatRoomRepo, userRepo)
+	input := applicationservice.AddChatRoomMemberInput{
 		ChatRoomID: 1,
 		UserID:     999,
 	}
@@ -102,8 +102,8 @@ func TestAddChatRoomMember_存在しないチャットルームに追加でき�
 	chatRoomRepo := &mockChatRoomRepository{room: nil} // ルームが存在しない
 	existingUser := user.ReconstructUser(1, "テストユーザー")
 	userRepo := &mockUserRepository{user: existingUser}
-	usecase := usecases.NewAddChatRoomMemberUsecase(chatRoomRepo, userRepo)
-	input := usecases.AddChatRoomMemberInput{
+	usecase := applicationservice.NewAddChatRoomMemberUsecase(chatRoomRepo, userRepo)
+	input := applicationservice.AddChatRoomMemberInput{
 		ChatRoomID: 999,
 		UserID:     1,
 	}
@@ -128,8 +128,8 @@ func TestAddChatRoomMember_すでにメンバーの場合は追加できない(t
 	existingUser := user.ReconstructUser(1, "テストユーザー")
 	chatRoomRepo := &mockChatRoomRepository{room: existingRoom}
 	userRepo := &mockUserRepository{user: existingUser}
-	usecase := usecases.NewAddChatRoomMemberUsecase(chatRoomRepo, userRepo)
-	input := usecases.AddChatRoomMemberInput{
+	usecase := applicationservice.NewAddChatRoomMemberUsecase(chatRoomRepo, userRepo)
+	input := applicationservice.AddChatRoomMemberInput{
 		ChatRoomID: 1,
 		UserID:     42,
 	}
