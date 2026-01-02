@@ -1,4 +1,3 @@
-
 CREATE TABLE IF NOT EXISTS messages (
   id CHAR(26) PRIMARY KEY,
   user_id BIGINT NOT NULL,

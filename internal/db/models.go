@@ -5,6 +5,7 @@
 package db
 
 import (
+	"encoding/json"
 	"time"
 )
 
@@ -21,6 +22,13 @@ type ChatRoomMember struct {
 	ChatRoomID string    `json:"chat_room_id"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+type EventRecord struct {
+	ID        string          `json:"id"`
+	EventType string          `json:"event_type"`
+	Payload   json.RawMessage `json:"payload"`
+	CreatedAt time.Time       `json:"created_at"`
 }
 
 type Message struct {
