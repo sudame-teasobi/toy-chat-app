@@ -1,0 +1,101 @@
+package repository
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+
+	"github.com/oklog/ulid/v2"
+	"github.com/sudame/chat/internal/db"
+	"github.com/sudame/chat/internal/domain/chatroom"
+)
+
+var _ chatroom.Repository = (*ChatRoomRepository)(nil)
+
+// ChatRoomRepository implements chatroom.Repository using TiDB.
+type ChatRoomRepository struct {
+	db      *sql.DB
+	queries *db.Queries
+}
+
+// NewChatRoomRepository creates a new ChatRoomRepository.
+func NewChatRoomRepository(database *sql.DB) *ChatRoomRepository {
+	return &ChatRoomRepository{
+		db:      database,
+		queries: db.New(database),
+	}
+}
+
+// Save persists a chat room and its events to TiDB.
+func (r *ChatRoomRepository) Save(ctx context.Context, cr *chatroom.ChatRoom) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	qtx := r.queries.WithTx(tx)
+
+	// Insert chat room
+	_, err = qtx.CreateChatRoom(ctx, db.CreateChatRoomParams{
+		ID:   cr.ID(),
+		Name: cr.Name(),
+	})
+	if err != nil {
+		return err
+	}
+
+	// Insert members
+	for _, member := range cr.Members() {
+		_, err = qtx.CreateMember(ctx, db.CreateMemberParams{
+			ID:         ulid.Make().String(),
+			UserID:     member.UserID(),
+			ChatRoomID: cr.ID(),
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	// Insert events
+	for _, event := range cr.Events() {
+		payload, err := json.Marshal(event)
+		if err != nil {
+			return err
+		}
+
+		_, err = qtx.InsertEvent(ctx, db.InsertEventParams{
+			ID:        ulid.Make().String(),
+			EventType: event.EventType(),
+			Payload:   payload,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+// FindByID retrieves a chat room by ID from TiDB.
+func (r *ChatRoomRepository) FindByID(ctx context.Context, id string) (*chatroom.ChatRoom, error) {
+	row, err := r.queries.GetChatRoom(ctx, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, chatroom.ErrNotFound
+		}
+		return nil, err
+	}
+
+	memberRows, err := r.queries.GetMembersByChatRoomID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	members := make([]chatroom.Member, len(memberRows))
+	for i, m := range memberRows {
+		members[i] = chatroom.ReconstructMember(m.ID, m.UserID)
+	}
+
+	return chatroom.ReconstructChatRoom(row.ID, row.Name, members), nil
+}

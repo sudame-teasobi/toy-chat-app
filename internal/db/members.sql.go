@@ -40,3 +40,36 @@ func (q *Queries) GetMember(ctx context.Context, id string) (ChatRoomMember, err
 	)
 	return i, err
 }
+
+const getMembersByChatRoomID = `-- name: GetMembersByChatRoomID :many
+SELECT id, user_id, chat_room_id, created_at, updated_at FROM chat_room_members WHERE chat_room_id = ?
+`
+
+func (q *Queries) GetMembersByChatRoomID(ctx context.Context, chatRoomID string) ([]ChatRoomMember, error) {
+	rows, err := q.db.QueryContext(ctx, getMembersByChatRoomID, chatRoomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ChatRoomMember
+	for rows.Next() {
+		var i ChatRoomMember
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.ChatRoomID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
