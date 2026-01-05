@@ -40,7 +40,7 @@ go mod tidy
 go test ./...
 
 # 特定パッケージのテスト
-go test ./internal/usecases/create_chat_room/...
+go test ./internal/applicationservice/...
 
 # 詳細出力付き
 go test -v ./...
@@ -62,9 +62,14 @@ cmd/
 └── migrate/         # データベースマイグレーションCLI
 
 internal/
-├── usecases/        # 機能別ビジネスロジック（例: create_chat_room/）
-├── models/          # ドメインエンティティ
-└── db/              # SQLC生成コード（gitignore対象）
+├── applicationservice/  # アプリケーションサービス（create_chat_room, add_chat_room_member）
+├── db/                  # SQLC生成コード（gitignore対象）
+├── domain/              # ドメイン層
+│   ├── chatroom/        # チャットルームエンティティ、イベント、リポジトリインターフェース
+│   └── user/            # ユーザーエンティティ、イベント、リポジトリインターフェース
+├── events/              # イベント共通定義
+└── infrastructure/      # インフラ層
+    └── repository/      # リポジトリ実装（TiDB）
 
 sql/
 ├── migrations/      # バージョン管理されたスキーマファイル（up/downペア）
@@ -77,16 +82,23 @@ sql/
 - **マイグレーション**: golang-migrateによる番号付きup/downファイル
 - **コード生成**: SQLCが`sql/queries/*.sql`から型付きGoコードを生成
 
-テーブル: `users`, `chat_rooms`, `chat_room_members`, `messages`
+テーブル: `users`, `chat_rooms`, `chat_room_members`, `messages`, `event_records`
 
 ## インフラストラクチャ
 
 Docker Composeサービス:
-- **TiDB**（ポート4000） - 状態データベース
-- **TiCDC**（ポート8300） - Kafkaへの変更データキャプチャ
+
+**TiDBクラスタ:**
+- **tidb-pd**（ポート2379） - Placement Driver（クラスタメタデータ管理）
+- **tidb-tikv**（ポート20160） - 分散KVストレージ
+- **tidb-tidb**（ポート4000） - MySQL互換SQLレイヤー
+- **tidb-ticdc**（ポート8300） - Kafkaへの変更データキャプチャ
+- **tidb-ticdc-init** - TiCDC changefeed初期化用
+
+**その他:**
 - **Kafka**（ポート9092） - イベントストリーミング
 - **Kafka-UI**（ポート8181） - Kafka監視用Webインターフェース
-- **DynamoDB**（ポート8000） - ローカル開発用
+- **DynamoDB**（ポート8000） - ローカル開発用（リードモデル用）
 
 ## 開発メモ
 

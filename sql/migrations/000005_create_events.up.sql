@@ -1,4 +1,3 @@
-
 CREATE TABLE IF NOT EXISTS event_records(
   id CHAR(26) PRIMARY KEY,
   event_type VARCHAR(255) NOT NULL,

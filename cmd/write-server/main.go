@@ -1,15 +1,16 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/segmentio/kafka-go"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/sudame/chat/internal/handler"
+	"github.com/sudame/chat/internal/infrastructure/repository"
 )
 
 func main() {
@@ -34,197 +35,41 @@ func main() {
 	if err := db.Ping(); err != nil {
 		log.Fatalf("Failed to connect to TiDB: %v", err)
 	}
+	log.Println("Connected to TiDB successfully")
 
-	var version string
-	if err := db.QueryRow("SELECT VERSION()").Scan(&version); err != nil {
-		log.Fatalf("Failed to query version: %v", err)
-	}
+	chatRoomRepo := repository.NewChatRoomRepository(db)
+	userRepo := repository.NewUserRepository(db)
 
-	fmt.Printf("Connected to TiDB successfully!\n")
-	fmt.Printf("TiDB version: %s\n", version)
-
-	// Create test table
-	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS test_write (
-			id INT AUTO_INCREMENT PRIMARY KEY,
-			message VARCHAR(255) NOT NULL,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-		)
-	`)
-	if err != nil {
-		log.Fatalf("Failed to create test table: %v", err)
-	}
-	fmt.Println("Test table created/verified.")
-
-	// Insert test data
-	result, err := db.Exec("INSERT INTO test_write (message) VALUES (?)", "Hello from write-server!")
-	if err != nil {
-		log.Fatalf("Failed to insert test data: %v", err)
-	}
-	insertedID, _ := result.LastInsertId()
-	fmt.Printf("Inserted test data with ID: %d\n", insertedID)
-
-	// Verify the inserted data
-	var message string
-	err = db.QueryRow("SELECT message FROM test_write WHERE id = ?", insertedID).Scan(&message)
-	if err != nil {
-		log.Fatalf("Failed to read inserted data: %v", err)
-	}
-	fmt.Printf("Verified inserted data: %q\n", message)
-
-	// Delete the test data
-	result, err = db.Exec("DELETE FROM test_write WHERE id = ?", insertedID)
-	if err != nil {
-		log.Fatalf("Failed to delete test data: %v", err)
-	}
-	rowsAffected, _ := result.RowsAffected()
-	fmt.Printf("Deleted %d row(s).\n", rowsAffected)
-
-	// Verify deletion
-	err = db.QueryRow("SELECT message FROM test_write WHERE id = ?", insertedID).Scan(&message)
-	if err == sql.ErrNoRows {
-		fmt.Println("Verified: data was successfully deleted.")
-	} else if err != nil {
-		log.Fatalf("Failed to verify deletion: %v", err)
-	} else {
-		log.Fatalf("Data still exists after deletion!")
-	}
-
-	fmt.Println("All write/delete tests passed!")
-
-	// ==========================================
-	// Kafka connectivity test
-	// ==========================================
-	fmt.Println("\n--- Kafka Connectivity Test ---")
-
-	kafkaBroker := getEnv("KAFKA_BROKER", "localhost:9092")
-	kafkaTopic := "test-write-server"
-
-	// Connect to Kafka and get broker metadata
-	conn, err := kafka.Dial("tcp", kafkaBroker)
-	if err != nil {
-		log.Fatalf("Failed to connect to Kafka: %v", err)
-	}
-	defer func() {
-		if err := conn.Close(); err != nil {
-			log.Printf("Failed to close Kafka connection: %v", err)
-		}
-	}()
-
-	// Get broker info
-	brokers, err := conn.Brokers()
-	if err != nil {
-		log.Fatalf("Failed to get Kafka brokers: %v", err)
-	}
-	fmt.Printf("Connected to Kafka successfully!\n")
-	fmt.Printf("Brokers: ")
-	for i, b := range brokers {
-		if i > 0 {
-			fmt.Print(", ")
-		}
-		fmt.Printf("%s:%d", b.Host, b.Port)
-	}
-	fmt.Println()
-
-	// Create test topic (if not exists)
-	controller, err := conn.Controller()
-	if err != nil {
-		log.Fatalf("Failed to get Kafka controller: %v", err)
-	}
-	controllerConn, err := kafka.Dial("tcp", fmt.Sprintf("%s:%d", controller.Host, controller.Port))
-	if err != nil {
-		log.Fatalf("Failed to connect to Kafka controller: %v", err)
-	}
-	defer func() {
-		if err := controllerConn.Close(); err != nil {
-			log.Printf("Failed to close Kafka controller connection: %v", err)
-		}
-	}()
-
-	err = controllerConn.CreateTopics(kafka.TopicConfig{
-		Topic:             kafkaTopic,
-		NumPartitions:     1,
-		ReplicationFactor: 1,
-	})
-	if err != nil {
-		log.Printf("Topic creation (may already exist): %v", err)
-	}
-	fmt.Printf("Test topic '%s' ready.\n", kafkaTopic)
-
-	// Produce a test message
-	writer := &kafka.Writer{
-		Addr:         kafka.TCP(kafkaBroker),
-		Topic:        kafkaTopic,
-		Balancer:     &kafka.LeastBytes{},
-		WriteTimeout: 10 * time.Second,
-	}
-	defer func() {
-		if err := writer.Close(); err != nil {
-			log.Printf("Failed to close Kafka writer: %v", err)
-		}
-	}()
-
-	testMessage := fmt.Sprintf("Hello from write-server at %s", time.Now().Format(time.RFC3339))
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	err = writer.WriteMessages(ctx, kafka.Message{
-		Key:   []byte("test-key"),
-		Value: []byte(testMessage),
-	})
-	if err != nil {
-		log.Fatalf("Failed to produce message to Kafka: %v", err)
-	}
-	fmt.Printf("Produced message: %q\n", testMessage)
-
-	// Consume the test message
-	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:   []string{kafkaBroker},
-		Topic:     kafkaTopic,
-		Partition: 0,
-		MinBytes:  1,
-		MaxBytes:  10e6,
-		MaxWait:   3 * time.Second,
-	})
-	defer func() {
-		if err := reader.Close(); err != nil {
-			log.Printf("Failed to close Kafka reader: %v", err)
-		}
-	}()
-
-	// Seek to the latest offset minus 1 to read our message
-	if err := reader.SetOffset(kafka.LastOffset); err != nil {
-		log.Printf("Failed to set offset to LastOffset: %v", err)
-	}
-	// Read from beginning to find our message
-	if err := reader.SetOffset(0); err != nil {
-		log.Fatalf("Failed to set offset to 0: %v", err)
-	}
-
-	readCtx, readCancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer readCancel()
-
-	var foundMessage bool
-	for {
-		msg, err := reader.ReadMessage(readCtx)
-		if err != nil {
-			if err == context.DeadlineExceeded {
-				break
+	e := echo.New()
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogStatus:   true,
+		LogURI:      true,
+		LogMethod:   true,
+		LogLatency:  true,
+		LogError:    true,
+		HandleError: true,
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			if v.Error != nil {
+				log.Printf("%s %s %d %v - error: %v", v.Method, v.URI, v.Status, v.Latency, v.Error)
+			} else {
+				log.Printf("%s %s %d %v", v.Method, v.URI, v.Status, v.Latency)
 			}
-			log.Fatalf("Failed to consume message from Kafka: %v", err)
-		}
-		if string(msg.Value) == testMessage {
-			fmt.Printf("Consumed message: %q\n", string(msg.Value))
-			foundMessage = true
-			break
-		}
-	}
+			return nil
+		},
+	}))
+	e.Use(middleware.Recover())
 
-	if !foundMessage {
-		log.Fatalf("Failed to find the produced message in Kafka")
-	}
+	createChatRoomHandler := handler.NewCreateChatRoomHandler(chatRoomRepo, userRepo)
+	e.POST("/create-chat-room", createChatRoomHandler.Handle)
 
-	fmt.Println("All Kafka tests passed!")
+	createUserHandler := handler.NewCreateUserHandler(userRepo)
+	e.POST("/create-user", createUserHandler.Handle)
+
+	serverPort := getEnv("SERVER_PORT", "8080")
+	log.Printf("Starting server on port %s", serverPort)
+	if err := e.Start(":" + serverPort); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }
 
 func getEnv(key, defaultValue string) string {
