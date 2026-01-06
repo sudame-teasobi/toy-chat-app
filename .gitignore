@@ -1,13 +1,3 @@
-# Deno cache
-/deno_dir/
-
-# Deno lock file
-deno.lock
-
-# Deno compiled output
-*.js
-*.js.map
-
 # Env files
 .env
 .env.local
