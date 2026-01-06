@@ -114,19 +114,6 @@ services:
         condition: service_healthy
       tidb-tikv:
         condition: service_healthy
-  tidb-ticdc-init:
-    image: pingcap/ticdc:v8.5.2
-    command:
-      - /cdc
-      - cli
-      - changefeed
-      - create
-      - --server=http://tidb-ticdc:8300
-      - --sink-uri=kafka://kafka:29092/ticdc?protocol=simple&enable-tidb-extension=false
-      - --changefeed-id=cfc1
-    depends_on:
-      tidb-ticdc:
-        condition: service_healthy
 
   dynamodb:
     command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"

@@ -1,19 +1,18 @@
 # toy-chat-app
 
-このアプリケーションは、ソフトウェアやソフトウェアアーキテクチャの勉強のために作られたチャットアプリです。
+## コマンド
 
-## 基本方針
+### TiCDC Changefeed 管理
 
-CQRS+ES を基本としたアーキテクチャを用います。
+TiCDC の changefeed を管理するコマンドです。
 
-- 書き込み側は TiDB をステートDBとして利用
-- ステートの更新と同一のトランザクションでイベントテーブルにイベントも書き込み
-- イベントテーブルの内容は TiCDC で Kafka に流す
-- 読み込み側は Kafka に流れてきたイベントをサブスクリプションしてプロジェクション
+```bash
+# changefeed 一覧を取得
+go run ./cmd/ticdc/main.go -cmd list
 
+# changefeed を作成
+go run ./cmd/ticdc/main.go -cmd create
 
-## 仕様
-
-### 書き込み側
-
-書き込み側は `/internal/usecases/` の中にユースケースを作成し、それを利用する方針にします。
+# changefeed を削除
+go run ./cmd/ticdc/main.go -cmd delete
+```
