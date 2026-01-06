@@ -158,6 +158,25 @@ services:
       DB_PASSWORD: ""
       DB_NAME: toy_chat_app
 
+  event-consumer:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/event-consumer.dockerfile
+    depends_on:
+      tidb-tidb:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+    environment:
+      DB_HOST: tidb-tidb
+      DB_PORT: 4000
+      DB_USER: root
+      DB_PASSWORD: ""
+      DB_NAME: toy_chat_app
+      KAFKA_BROKER: kafka:29092
+      KAFKA_TOPIC: event-records-changefeed
+      KAFKA_GROUP_ID: event-consumer-group
+
   ##########################################
   # 開発用ツール: 81xx番台のポートを使用
   ##########################################

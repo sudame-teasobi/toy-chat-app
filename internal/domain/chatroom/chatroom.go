@@ -14,10 +14,10 @@ type ChatRoom struct {
 }
 
 // NewChatRoom creates a new ChatRoom aggregate.
-// It validates the name, adds the creator as the first member,
-// and records ChatRoomCreatedEvent and MemberAddedEvent.
+// It validates the name and records ChatRoomCreatedEvent.
+// Member addition is handled asynchronously by the event consumer.
 func NewChatRoom(name string, creatorUserID string) (*ChatRoom, error) {
-	id := ulid.Make().String()
+	id := "chat-room:" + ulid.Make().String()
 
 	if name == "" {
 		return nil, ErrEmptyName
@@ -26,17 +26,14 @@ func NewChatRoom(name string, creatorUserID string) (*ChatRoom, error) {
 	cr := &ChatRoom{
 		id:      id,
 		name:    name,
-		members: []Member{NewMember(creatorUserID)},
+		members: []Member{},
 		events:  make([]events.Event, 0),
 	}
 
 	cr.events = append(cr.events, &ChatRoomCreatedEvent{
-		ChatRoomID: id,
-		Name:       name,
-	})
-	cr.events = append(cr.events, &MemberAddedEvent{
-		ChatRoomID: id,
-		UserID:     creatorUserID,
+		ChatRoomID:    id,
+		Name:          name,
+		CreatorUserID: creatorUserID,
 	})
 
 	return cr, nil

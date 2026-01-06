@@ -11,8 +11,9 @@ var (
 
 // ChatRoomCreatedEvent is raised when a chat room is created.
 type ChatRoomCreatedEvent struct {
-	ChatRoomID string
-	Name       string
+	ChatRoomID    string
+	Name          string
+	CreatorUserID string
 }
 
 func (e *ChatRoomCreatedEvent) EventType() string {

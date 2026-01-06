@@ -31,25 +31,19 @@ func TestNewChatRoom(t *testing.T) {
 		}
 	})
 
-	t.Run("作成者がメンバーとして追加される", func(t *testing.T) {
+	t.Run("作成時はメンバーが空（非同期で追加される）", func(t *testing.T) {
 		cr, _ := NewChatRoom("テストルーム", "user-100")
-		if !cr.IsMember("user-100") {
-			t.Error("expected creator to be a member")
-		}
 		members := cr.Members()
-		if len(members) != 1 {
-			t.Errorf("expected 1 member, got %d", len(members))
-		}
-		if members[0].UserID() != "user-100" {
-			t.Errorf("expected member userID 'user-100', got '%s'", members[0].UserID())
+		if len(members) != 0 {
+			t.Errorf("expected 0 members, got %d", len(members))
 		}
 	})
 
-	t.Run("イベントが正しく記録される", func(t *testing.T) {
+	t.Run("ChatRoomCreatedEventのみが記録される", func(t *testing.T) {
 		cr, _ := NewChatRoom("テストルーム", "user-100")
 		events := cr.Events()
-		if len(events) != 2 {
-			t.Fatalf("expected 2 events, got %d", len(events))
+		if len(events) != 1 {
+			t.Fatalf("expected 1 event, got %d", len(events))
 		}
 
 		createdEvent, ok := events[0].(*ChatRoomCreatedEvent)
@@ -62,16 +56,8 @@ func TestNewChatRoom(t *testing.T) {
 		if createdEvent.Name != "テストルーム" {
 			t.Errorf("expected Name 'テストルーム', got '%s'", createdEvent.Name)
 		}
-
-		memberAddedEvent, ok := events[1].(*MemberAddedEvent)
-		if !ok {
-			t.Fatal("expected second event to be MemberAddedEvent")
-		}
-		if memberAddedEvent.ChatRoomID != cr.ID() {
-			t.Errorf("expected ChatRoomID '%s', got '%s'", cr.ID(), memberAddedEvent.ChatRoomID)
-		}
-		if memberAddedEvent.UserID != "user-100" {
-			t.Errorf("expected UserID 'user-100', got '%s'", memberAddedEvent.UserID)
+		if createdEvent.CreatorUserID != "user-100" {
+			t.Errorf("expected CreatorUserID 'user-100', got '%s'", createdEvent.CreatorUserID)
 		}
 	})
 }
@@ -117,15 +103,16 @@ func TestChatRoom_AddMember(t *testing.T) {
 		if !cr.IsMember("user-200") {
 			t.Error("expected new user to be a member")
 		}
-		if len(cr.Members()) != 2 {
-			t.Errorf("expected 2 members, got %d", len(cr.Members()))
+		if len(cr.Members()) != 1 {
+			t.Errorf("expected 1 member, got %d", len(cr.Members()))
 		}
 	})
 
 	t.Run("異常系: 既存メンバーを追加するとエラー", func(t *testing.T) {
 		cr, _ := NewChatRoom("テストルーム", "user-100")
+		_ = cr.AddMember("user-100") // まずメンバーを追加
 
-		err := cr.AddMember("user-100")
+		err := cr.AddMember("user-100") // 再度追加しようとする
 		if err != ErrAlreadyMember {
 			t.Errorf("expected ErrAlreadyMember, got %v", err)
 		}
@@ -154,6 +141,7 @@ func TestChatRoom_AddMember(t *testing.T) {
 func TestChatRoom_IsMember(t *testing.T) {
 	t.Run("メンバーの場合trueを返す", func(t *testing.T) {
 		cr, _ := NewChatRoom("テストルーム", "user-100")
+		_ = cr.AddMember("user-100") // メンバーを追加
 		if !cr.IsMember("user-100") {
 			t.Error("expected true for member")
 		}
@@ -185,6 +173,7 @@ func TestChatRoom_ClearEvents(t *testing.T) {
 func TestChatRoom_Members_ReturnsCopy(t *testing.T) {
 	t.Run("Membersは防御的コピーを返す", func(t *testing.T) {
 		cr, _ := NewChatRoom("テストルーム", "user-100")
+		_ = cr.AddMember("user-100") // メンバーを追加
 		members1 := cr.Members()
 		members2 := cr.Members()
 

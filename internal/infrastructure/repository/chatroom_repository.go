@@ -27,6 +27,7 @@ func NewChatRoomRepository(database *sql.DB) *ChatRoomRepository {
 }
 
 // Save persists a chat room and its events to TiDB.
+// It processes events to determine which operations to perform.
 func (r *ChatRoomRepository) Save(ctx context.Context, cr *chatroom.ChatRoom) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -36,29 +37,32 @@ func (r *ChatRoomRepository) Save(ctx context.Context, cr *chatroom.ChatRoom) er
 
 	qtx := r.queries.WithTx(tx)
 
-	// Insert chat room
-	_, err = qtx.CreateChatRoom(ctx, db.CreateChatRoomParams{
-		ID:   cr.ID(),
-		Name: cr.Name(),
-	})
-	if err != nil {
-		return err
-	}
-
-	// Insert members
-	for _, member := range cr.Members() {
-		_, err = qtx.CreateMember(ctx, db.CreateMemberParams{
-			ID:         ulid.Make().String(),
-			UserID:     member.UserID(),
-			ChatRoomID: cr.ID(),
-		})
-		if err != nil {
-			return err
-		}
-	}
-
-	// Insert events
+	// Process events to determine operations
 	for _, event := range cr.Events() {
+		switch e := event.(type) {
+		case *chatroom.ChatRoomCreatedEvent:
+			// Insert chat room only when ChatRoomCreatedEvent exists
+			_, err = qtx.CreateChatRoom(ctx, db.CreateChatRoomParams{
+				ID:   cr.ID(),
+				Name: cr.Name(),
+			})
+			if err != nil {
+				return err
+			}
+
+		case *chatroom.MemberAddedEvent:
+			// Insert member when MemberAddedEvent exists
+			_, err = qtx.CreateMember(ctx, db.CreateMemberParams{
+				ID:         ulid.Make().String(),
+				UserID:     e.UserID,
+				ChatRoomID: e.ChatRoomID,
+			})
+			if err != nil {
+				return err
+			}
+		}
+
+		// Insert event record
 		payload, err := json.Marshal(event)
 		if err != nil {
 			return err
