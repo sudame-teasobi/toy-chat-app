@@ -31,29 +31,6 @@ func TestCreateChatRoom_正常にチャットルームを作成できる(t *test
 	}
 }
 
-func TestCreateChatRoom_作成時はメンバーが空_非同期で追加される(t *testing.T) {
-	// Arrange
-	existingUser := user.ReconstructUser("user-42", "テストユーザー")
-	chatRoomRepo := &mockChatRoomRepository{}
-	userRepo := &mockUserRepository{user: existingUser}
-	usecase := applicationservice.NewCreateChatRoomUsecase(chatRoomRepo, userRepo)
-	input := applicationservice.CreateChatRoomInput{
-		Name:      "テストルーム",
-		CreatorID: "user-42",
-	}
-
-	// Act
-	output, err := usecase.Execute(context.Background(), input)
-	// Assert
-	if err != nil {
-		t.Fatalf("予期しないエラー: %v", err)
-	}
-	// メンバーは非同期で追加されるため、作成直後は空
-	if len(output.ChatRoom.Members()) != 0 {
-		t.Errorf("作成直後はメンバーが空であるべき: got %d members", len(output.ChatRoom.Members()))
-	}
-}
-
 func TestCreateChatRoom_空文字の名前でルームを作成できない(t *testing.T) {
 	// Arrange
 	existingUser := user.ReconstructUser("user-1", "テストユーザー")

@@ -91,15 +91,5 @@ func (r *ChatRoomRepository) FindByID(ctx context.Context, id string) (*chatroom
 		return nil, err
 	}
 
-	memberRows, err := r.queries.GetMembersByChatRoomID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	members := make([]chatroom.Member, len(memberRows))
-	for i, m := range memberRows {
-		members[i] = chatroom.ReconstructMember(m.ID, m.UserID)
-	}
-
-	return chatroom.ReconstructChatRoom(row.ID, row.Name, members), nil
+	return chatroom.ReconstructChatRoom(row.ID, row.Name), nil
 }

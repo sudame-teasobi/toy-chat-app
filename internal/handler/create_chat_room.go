@@ -63,14 +63,8 @@ func (h *CreateChatRoomHandler) Handle(c echo.Context) error {
 		}
 	}
 
-	members := make([]MemberResponse, len(output.ChatRoom.Members()))
-	for i, m := range output.ChatRoom.Members() {
-		members[i] = MemberResponse{UserID: m.UserID()}
-	}
-
 	return c.JSON(http.StatusCreated, CreateChatRoomResponse{
-		ID:      output.ChatRoom.ID(),
-		Name:    output.ChatRoom.Name(),
-		Members: members,
+		ID:   output.ChatRoom.ID(),
+		Name: output.ChatRoom.Name(),
 	})
 }
