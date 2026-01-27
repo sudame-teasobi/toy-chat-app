@@ -9,7 +9,7 @@ import (
 	"github.com/sudame/chat/internal/ticdc"
 )
 
-func Listen(ctx context.Context, value []byte) error {
+func Listen(ctx context.Context, membershipRepository membership.Repository, value []byte) error {
 
 	var ticdcevent ticdc.Event
 	err := json.Unmarshal(value, &ticdcevent)
@@ -25,7 +25,7 @@ func Listen(ctx context.Context, value []byte) error {
 			return err
 		}
 
-		err = HandleChatRoomCreatedEvent(ctx, &chatRoomCreatedEvent)
+		err = HandleChatRoomCreatedEvent(ctx, membershipRepository, &chatRoomCreatedEvent)
 		if err != nil {
 			return err
 		}
@@ -34,10 +34,8 @@ func Listen(ctx context.Context, value []byte) error {
 	return nil
 }
 
-var membershipRepository membership.Repository
-
 // TODO: 他のファイルに移す
-func HandleChatRoomCreatedEvent(ctx context.Context, event *chatroom.ChatRoomCreatedEvent) error {
+func HandleChatRoomCreatedEvent(ctx context.Context, membershipRepository membership.Repository, event *chatroom.ChatRoomCreatedEvent) error {
 
 	m, err := membership.CreateMembership(event.ChatRoomID, event.CreatorUserID)
 	if err != nil {

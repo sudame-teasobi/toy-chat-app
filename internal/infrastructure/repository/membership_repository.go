@@ -15,6 +15,13 @@ type MembershipRepository struct {
 	queries *db.Queries
 }
 
+func NewMembershipRepository(database *sql.DB) *MembershipRepository {
+	return &MembershipRepository{
+		db:      database,
+		queries: db.New(database),
+	}
+}
+
 // FindById implements [membership.Repository].
 func (r *MembershipRepository) FindById(ctx context.Context, id string) (*membership.Membership, error) {
 	row, err := r.queries.GetMember(ctx, id)

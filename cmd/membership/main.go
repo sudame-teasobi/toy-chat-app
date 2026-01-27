@@ -1,4 +1,4 @@
-package membership
+package main
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"os"
 
 	"github.com/segmentio/kafka-go"
+	"github.com/sudame/chat/internal/infrastructure/repository"
+	"github.com/sudame/chat/internal/service/membership"
 )
 
 func getEnv(key string, defaultValue string) string {
@@ -18,6 +20,8 @@ func getEnv(key string, defaultValue string) string {
 }
 
 func main() {
+	ctx := context.Background()
+
 	host := getEnv("DB_HOST", "localhost")
 	port := getEnv("DB_PORT", "4000")
 	user := getEnv("DB_USER", "root")
@@ -41,6 +45,8 @@ func main() {
 	}
 	log.Println("Connected to TiDB successfully")
 
+	membershipRepository := repository.NewMembershipRepository(db)
+
 	reader := kafka.NewReader(
 		kafka.ReaderConfig{
 			Brokers:     []string{"localhost:9092"},
@@ -52,8 +58,13 @@ func main() {
 	for {
 		m, err := reader.ReadMessage(context.Background())
 		if err != nil {
-			break
+			fmt.Printf("Error: %v", err)
 		}
+
 		fmt.Printf("message at topic/partition/offset %v/%v/%v: %s = %s/n", m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
+		err = membership.Listen(ctx, membershipRepository, m.Value)
+		if err != nil {
+			fmt.Printf("Error: %v", err)
+		}
 	}
 }
