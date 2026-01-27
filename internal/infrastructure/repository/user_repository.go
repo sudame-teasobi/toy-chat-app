@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 
 	"github.com/oklog/ulid/v2"
 	"github.com/sudame/chat/internal/db"
@@ -47,15 +46,15 @@ func (r *UserRepository) Save(ctx context.Context, u *user.User) error {
 
 	// Insert events
 	for _, event := range u.Events() {
-		payload, err := json.Marshal(event)
+		eventEnvelope, err := event.ToEnvelope()
 		if err != nil {
 			return err
 		}
 
 		_, err = qtx.InsertEvent(ctx, db.InsertEventParams{
 			ID:        ulid.Make().String(),
-			EventType: event.EventType(),
-			Payload:   payload,
+			EventType: eventEnvelope.Type,
+			Payload:   eventEnvelope.Payload,
 		})
 		if err != nil {
 			return err

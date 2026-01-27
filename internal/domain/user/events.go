@@ -1,6 +1,10 @@
 package user
 
-import "github.com/sudame/chat/internal/events"
+import (
+	"encoding/json"
+
+	"github.com/sudame/chat/internal/events"
+)
 
 var _ events.Event = (*UserCreatedEvent)(nil)
 
@@ -10,6 +14,15 @@ type UserCreatedEvent struct {
 	Name   string
 }
 
-func (e *UserCreatedEvent) EventType() string {
-	return "UserCreated"
+// ToEnvelope implements [events.Event].
+func (u *UserCreatedEvent) ToEnvelope() (*events.EventEnvelope, error) {
+	payload, err := json.Marshal(u)
+	if err != nil {
+		return nil, err
+	}
+
+	return &events.EventEnvelope{
+		Type:    "user.created",
+		Payload: payload,
+	}, nil
 }

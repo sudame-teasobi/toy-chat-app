@@ -9,7 +9,7 @@ type EventEnvelope struct {
 
 // Event is the interface for all domain events.
 type Event interface {
-	EventType() string
+	ToEnvelope() (*EventEnvelope, error)
 }
 
 type EventHandler interface {

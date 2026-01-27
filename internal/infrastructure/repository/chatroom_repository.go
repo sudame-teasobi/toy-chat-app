@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 
 	"github.com/oklog/ulid/v2"
 	"github.com/sudame/chat/internal/db"
@@ -39,8 +38,12 @@ func (r *ChatRoomRepository) Save(ctx context.Context, cr *chatroom.ChatRoom) er
 
 	// Process events to determine operations
 	for _, event := range cr.Events() {
-		switch e := event.(type) {
-		case *chatroom.ChatRoomCreatedEvent:
+		envelope, err := event.ToEnvelope()
+		if err != nil {
+			return err
+		}
+		switch envelope.Type {
+		case chatroom.ChatRoomCreatedEventType:
 			// Insert chat room only when ChatRoomCreatedEvent exists
 			_, err = qtx.CreateChatRoom(ctx, db.CreateChatRoomParams{
 				ID:   cr.ID(),
@@ -49,29 +52,12 @@ func (r *ChatRoomRepository) Save(ctx context.Context, cr *chatroom.ChatRoom) er
 			if err != nil {
 				return err
 			}
-
-		case *chatroom.MemberAddedEvent:
-			// Insert member when MemberAddedEvent exists
-			_, err = qtx.CreateMember(ctx, db.CreateMemberParams{
-				ID:         ulid.Make().String(),
-				UserID:     e.UserID,
-				ChatRoomID: e.ChatRoomID,
-			})
-			if err != nil {
-				return err
-			}
-		}
-
-		// Insert event record
-		payload, err := json.Marshal(event)
-		if err != nil {
-			return err
 		}
 
 		_, err = qtx.InsertEvent(ctx, db.InsertEventParams{
 			ID:        ulid.Make().String(),
-			EventType: event.EventType(),
-			Payload:   payload,
+			EventType: envelope.Type,
+			Payload:   envelope.Payload,
 		})
 		if err != nil {
 			return err

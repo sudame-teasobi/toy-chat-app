@@ -9,41 +9,45 @@ import (
 	"github.com/sudame/chat/internal/ticdc"
 )
 
-func Listen(ctx context.Context, value []byte) {
+func Listen(ctx context.Context, value []byte) error {
 
 	var ticdcevent ticdc.Event
 	err := json.Unmarshal(value, &ticdcevent)
 	if err != nil {
-		// TODO: エラーハンドリング
-		panic(nil)
+		return err
 	}
 
 	switch ticdcevent.Data.Type {
-	case "chatroom.created":
+	case membership.MembershipCreatedEventType:
 		var chatRoomCreatedEvent chatroom.ChatRoomCreatedEvent
 		err := json.Unmarshal(ticdcevent.Data.Payload, &chatRoomCreatedEvent)
 		if err != nil {
-			// TODO: error handling
-			panic(nil)
+			return err
 		}
-		HandleChatRoomCreatedEvent(ctx, &chatRoomCreatedEvent)
+
+		err = HandleChatRoomCreatedEvent(ctx, &chatRoomCreatedEvent)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 var membershipRepository membership.Repository
 
 // TODO: 他のファイルに移す
-func HandleChatRoomCreatedEvent(ctx context.Context, event *chatroom.ChatRoomCreatedEvent) {
+func HandleChatRoomCreatedEvent(ctx context.Context, event *chatroom.ChatRoomCreatedEvent) error {
 
-	m, err := membership.NewMembership(event.ChatRoomID, event.CreatorUserID)
+	m, err := membership.CreateMembership(event.ChatRoomID, event.CreatorUserID)
 	if err != nil {
-		// TODO: エラーハンドリング
-		panic(nil)
+		return err
 	}
 
 	err = membershipRepository.Save(ctx, m)
 	if err != nil {
-		// TODO: error handling
-		panic(nil)
+		return err
 	}
+
+	return nil
 }
