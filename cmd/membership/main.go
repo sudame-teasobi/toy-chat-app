@@ -25,6 +25,8 @@ func getEnv(key string, defaultValue string) string {
 func main() {
 	ctx := context.Background()
 
+	kafkaBroker := getEnv("KAFKA_BROKER", "localhost:9092")
+
 	host := getEnv("DB_HOST", "localhost")
 	port := getEnv("DB_PORT", "4000")
 	user := getEnv("DB_USER", "root")
@@ -58,29 +60,43 @@ func main() {
 
 	reader := kafka.NewReader(
 		kafka.ReaderConfig{
-			Brokers:     []string{"localhost:9092"},
+			Brokers:     []string{kafkaBroker},
 			GroupID:     "membership-consumer-group",
 			GroupTopics: []string{"chat-room-events"},
 		},
 	)
 
-	for {
-		m, err := reader.ReadMessage(context.Background())
+	defer func() {
+		err := reader.Close()
 		if err != nil {
-			fmt.Printf("Error: %v", err)
+			log.Printf("failed to close reader: %s", err.Error())
+		}
+	}()
+
+	for {
+		select {
+		case <-ctx.Done():
+			log.Println("Shutting down...")
+			return
+		default:
+		}
+
+		m, err := reader.ReadMessage(ctx)
+		if err != nil {
+			log.Printf("Error: %s", err.Error())
 			continue
 		}
 
-		fmt.Printf("message at topic/partition/offset %v/%v/%v: %s = %s/n", m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
+		log.Printf("message at topic/partition/offset %v/%v/%v: %s = %s\n", m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
 		var e ticdc.Event
 		err = json.Unmarshal(m.Value, &e)
 		if err != nil {
-			fmt.Printf("failed to unmarshal data on kafka: %s", err.Error())
+			log.Printf("failed to unmarshal data on kafka: %s", err.Error())
 			continue
 		}
 		err = membershipConsumer.Consume(ctx, e)
 		if err != nil {
-			fmt.Printf("Error: %v", err)
+			log.Printf("Error: %s", err.Error())
 		}
 	}
 }
