@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sudame/chat/internal/handler"
 	"github.com/sudame/chat/internal/infrastructure/repository"
+	"github.com/sudame/chat/internal/service"
 )
 
 func main() {
@@ -37,9 +38,6 @@ func main() {
 	}
 	log.Println("Connected to TiDB successfully")
 
-	chatRoomRepo := repository.NewChatRoomRepository(db)
-	userRepo := repository.NewUserRepository(db)
-
 	e := echo.New()
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogStatus:   true,
@@ -59,11 +57,17 @@ func main() {
 	}))
 	e.Use(middleware.Recover())
 
-	createChatRoomHandler := handler.NewCreateChatRoomHandler(chatRoomRepo, userRepo)
-	e.POST("/create-chat-room", createChatRoomHandler.Handle)
+	roomRepo := repository.NewChatRoomRepository(db)
+	userRepo := repository.NewUserRepository(db)
 
-	createUserHandler := handler.NewCreateUserHandler(userRepo)
+	createUserService := service.NewCreateUserService(userRepo)
+	createRoomService := service.NewCreateRoomService(userRepo, roomRepo)
+
+	createUserHandler := handler.NewCreateUserHandler(*createUserService)
+	createRoomHandler := handler.NewCreateRoomHandler(*createRoomService)
+
 	e.POST("/create-user", createUserHandler.Handle)
+	e.POST("/create-chat-room", createRoomHandler.Handle)
 
 	serverPort := getEnv("SERVER_PORT", "8080")
 	log.Printf("Starting server on port %s", serverPort)

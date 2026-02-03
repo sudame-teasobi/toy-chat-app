@@ -1,29 +1,33 @@
 package user
 
-import "github.com/sudame/chat/internal/events"
+import (
+	"github.com/oklog/ulid/v2"
+	"github.com/sudame/chat/internal/events"
+)
 
-// User is the aggregate root for user domain.
 type User struct {
 	id     string
 	name   string
 	events []events.Event
 }
 
-func NewUser(id string, name string) (*User, error) {
+func NewUser(name string) (*User, error) {
+	id := "user:" + ulid.Make().String()
+
 	if name == "" {
 		return nil, ErrEmptyName
 	}
 
 	usr := &User{
-		id:     id,
-		name:   name,
-		events: make([]events.Event, 0),
+		id:   id,
+		name: name,
+		events: []events.Event{
+			&UserCreatedEvent{
+				UserID: id,
+				Name:   name,
+			},
+		},
 	}
-
-	usr.events = append(usr.events, &UserCreatedEvent{
-		UserID: usr.id,
-		Name:   usr.name,
-	})
 
 	return usr, nil
 }

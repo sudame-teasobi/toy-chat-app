@@ -6,10 +6,10 @@ import (
 
 	"github.com/oklog/ulid/v2"
 	"github.com/sudame/chat/internal/db"
-	"github.com/sudame/chat/internal/domain/chatroom"
+	"github.com/sudame/chat/internal/domain/room"
 )
 
-var _ chatroom.Repository = (*ChatRoomRepository)(nil)
+var _ room.Repository = (*ChatRoomRepository)(nil)
 
 // ChatRoomRepository implements chatroom.Repository using TiDB.
 type ChatRoomRepository struct {
@@ -27,7 +27,7 @@ func NewChatRoomRepository(database *sql.DB) *ChatRoomRepository {
 
 // Save persists a chat room and its events to TiDB.
 // It processes events to determine which operations to perform.
-func (r *ChatRoomRepository) Save(ctx context.Context, cr *chatroom.ChatRoom) error {
+func (r *ChatRoomRepository) Save(ctx context.Context, cr *room.Room) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -43,7 +43,7 @@ func (r *ChatRoomRepository) Save(ctx context.Context, cr *chatroom.ChatRoom) er
 			return err
 		}
 		switch envelope.Type {
-		case chatroom.ChatRoomCreatedEventType:
+		case room.ChatRoomCreatedEventType:
 			// Insert chat room only when ChatRoomCreatedEvent exists
 			_, err = qtx.CreateChatRoom(ctx, db.CreateChatRoomParams{
 				ID:   cr.ID(),
@@ -68,14 +68,14 @@ func (r *ChatRoomRepository) Save(ctx context.Context, cr *chatroom.ChatRoom) er
 }
 
 // FindByID retrieves a chat room by ID from TiDB.
-func (r *ChatRoomRepository) FindByID(ctx context.Context, id string) (*chatroom.ChatRoom, error) {
+func (r *ChatRoomRepository) FindByID(ctx context.Context, id string) (*room.Room, error) {
 	row, err := r.queries.GetChatRoom(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, chatroom.ErrNotFound
+			return nil, room.ErrNotFound
 		}
 		return nil, err
 	}
 
-	return chatroom.ReconstructChatRoom(row.ID, row.Name), nil
+	return room.ReconstructRoom(row.ID, row.Name), nil
 }

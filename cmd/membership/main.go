@@ -9,7 +9,6 @@ import (
 
 	"github.com/segmentio/kafka-go"
 	"github.com/sudame/chat/internal/infrastructure/repository"
-	"github.com/sudame/chat/internal/service/membership"
 )
 
 func getEnv(key string, defaultValue string) string {

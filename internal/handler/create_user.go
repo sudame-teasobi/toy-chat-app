@@ -1,12 +1,12 @@
 package handler
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/sudame/chat/internal/applicationservice"
-	"github.com/sudame/chat/internal/domain/user"
+	"github.com/sudame/chat/internal/service"
 )
 
 type CreateUserRequest struct {
@@ -14,17 +14,16 @@ type CreateUserRequest struct {
 }
 
 type CreateUserResponse struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	UserID string `json:"userId"`
 }
 
 type CreateUserHandler struct {
-	usecase *applicationservice.CreateUserUsecase
+	service service.CreateUserService
 }
 
-func NewCreateUserHandler(userRepo user.Repository) *CreateUserHandler {
+func NewCreateUserHandler(s service.CreateUserService) *CreateUserHandler {
 	return &CreateUserHandler{
-		usecase: applicationservice.NewCreateUserUsecase(userRepo),
+		service: s,
 	}
 }
 
@@ -37,24 +36,10 @@ func (h *CreateUserHandler) Handle(c echo.Context) error {
 
 	log.Printf("[INFO] /create-user: request received: name=%q", req.Name)
 
-	input := applicationservice.CreateUserInput{
-		Name: req.Name,
-	}
-
-	output, err := h.usecase.Execute(c.Request().Context(), input)
+	userId, err := h.service.Exec(c.Request().Context(), req.Name)
 	if err != nil {
-		log.Printf("[ERROR] /create-user: usecase execution failed: %v", err)
-		switch err {
-		case user.ErrEmptyName:
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
-		default:
-			log.Printf("[ERROR] /create-user: unexpected error: %+v", err)
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
-		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("internal server errror: %s", err.Error())})
 	}
 
-	return c.JSON(http.StatusCreated, CreateUserResponse{
-		ID:   output.User.ID(),
-		Name: output.User.Name(),
-	})
+	return c.JSON(http.StatusOK, CreateUserResponse{UserID: *userId})
 }
