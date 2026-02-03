@@ -3,12 +3,16 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/segmentio/kafka-go"
+	"github.com/sudame/chat/internal/consumer"
 	"github.com/sudame/chat/internal/infrastructure/repository"
+	"github.com/sudame/chat/internal/service"
+	"github.com/sudame/chat/internal/ticdc"
 )
 
 func getEnv(key string, defaultValue string) string {
@@ -44,7 +48,13 @@ func main() {
 	}
 	log.Println("Connected to TiDB successfully")
 
-	membershipRepository := repository.NewMembershipRepository(db)
+	userRepo := repository.NewUserRepository(db)
+	roomRepo := repository.NewChatRoomRepository(db)
+	membershipRepo := repository.NewMembershipRepository(db)
+
+	createMembershipService := service.NewCreateMembershipService(userRepo, roomRepo, membershipRepo)
+
+	membershipConsumer := consumer.NewMembershipConsumer(createMembershipService)
 
 	reader := kafka.NewReader(
 		kafka.ReaderConfig{
@@ -58,10 +68,17 @@ func main() {
 		m, err := reader.ReadMessage(context.Background())
 		if err != nil {
 			fmt.Printf("Error: %v", err)
+			continue
 		}
 
 		fmt.Printf("message at topic/partition/offset %v/%v/%v: %s = %s/n", m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
-		err = membership.Listen(ctx, membershipRepository, m.Value)
+		var e ticdc.Event
+		err = json.Unmarshal(m.Value, &e)
+		if err != nil {
+			fmt.Printf("failed to unmarshal data on kafka: %s", err.Error())
+			continue
+		}
+		err = membershipConsumer.Consume(ctx, e)
 		if err != nil {
 			fmt.Printf("Error: %v", err)
 		}

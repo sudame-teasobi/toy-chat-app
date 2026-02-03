@@ -54,28 +54,6 @@ write-serverに必要:
 
 ローカルデフォルト値: `localhost:4000`（TiDB）, `localhost:9092`（Kafka）
 
-## コードアーキテクチャ
-
-```
-cmd/
-├── write-server/    # 書き込み側HTTPサーバー
-└── migrate/         # データベースマイグレーションCLI
-
-internal/
-├── applicationservice/  # アプリケーションサービス（create_chat_room, add_chat_room_member）
-├── db/                  # SQLC生成コード（gitignore対象）
-├── domain/              # ドメイン層
-│   ├── chatroom/        # チャットルームエンティティ、イベント、リポジトリインターフェース
-│   └── user/            # ユーザーエンティティ、イベント、リポジトリインターフェース
-├── events/              # イベント共通定義
-└── infrastructure/      # インフラ層
-    └── repository/      # リポジトリ実装（TiDB）
-
-sql/
-├── migrations/      # バージョン管理されたスキーマファイル（up/downペア）
-└── queries/         # SQLCクエリ定義（.sqlファイル）
-```
-
 ## データベース
 
 - **エンジン**: TiDB（MySQL互換の分散データベース）
