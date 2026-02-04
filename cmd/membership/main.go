@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/segmentio/kafka-go"
 	"github.com/sudame/chat/internal/consumer"
 	"github.com/sudame/chat/internal/infrastructure/repository"
@@ -62,7 +63,7 @@ func main() {
 		kafka.ReaderConfig{
 			Brokers:     []string{kafkaBroker},
 			GroupID:     "membership-consumer-group",
-			GroupTopics: []string{"chat-room-events"},
+			GroupTopics: []string{"event-records-changefeed"},
 		},
 	)
 

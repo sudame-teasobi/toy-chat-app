@@ -11,18 +11,11 @@ const (
 )
 
 type EventData struct {
-	Type    string          `json:"type"`
+	ID      string          `json:"id"`
+	Type    string          `json:"event_type"`
 	Payload json.RawMessage `json:"payload"`
 }
 
 type Event struct {
-	Version       int           `json:"version"`
-	Database      string        `json:"database"`
-	Table         string        `json:"table"`
-	TableID       int           `json:"tableID"`
-	Type          OperationType `json:"type"`
-	CommitTs      int64         `json:"commitTs"`
-	BuildTs       int64         `json:"buildTs"`
-	SchemaVersion int64         `json:"schemaVersion"`
-	Data          EventData     `json:"data"`
+	Data []EventData `json:"data"`
 }

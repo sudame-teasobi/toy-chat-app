@@ -23,10 +23,18 @@ type CreateRoomHandler struct {
 }
 
 func NewCreateRoomHandler(createRoomService service.CreateRoomService) *CreateRoomHandler {
-	return &CreateRoomHandler{}
+	return &CreateRoomHandler{
+		service: createRoomService,
+	}
 }
 
-func (h *CreateRoomHandler) Handle(c echo.Context) error {
+func (h *CreateRoomHandler) Handle(c echo.Context) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = c.JSON(http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("internal server error: %s", r)})
+		}
+	}()
+
 	var req CreateRoomRequest
 	if err := c.Bind(&req); err != nil {
 		log.Printf("[ERROR] /create-chat-room: failed to bind request: %v", err)

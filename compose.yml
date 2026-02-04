@@ -158,10 +158,10 @@ services:
       DB_PASSWORD: ""
       DB_NAME: toy_chat_app
 
-  event-consumer:
+  membership:
     build:
       context: .
-      dockerfile: ./dockerfiles/event-consumer.dockerfile
+      dockerfile: ./dockerfiles/membership.dockerfile
     depends_on:
       tidb-tidb:
         condition: service_started
