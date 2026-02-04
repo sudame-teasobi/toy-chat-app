@@ -3,9 +3,11 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/oklog/ulid/v2"
 	"github.com/sudame/chat/internal/db"
+
 	"github.com/sudame/chat/internal/domain/user"
 )
 
@@ -35,20 +37,23 @@ func (r *UserRepository) Save(ctx context.Context, u *user.User) error {
 
 	qtx := r.queries.WithTx(tx)
 
-	// Insert user
-	_, err = qtx.CreateUser(ctx, db.CreateUserParams{
-		ID:   u.ID(),
-		Name: u.Name(),
-	})
-	if err != nil {
-		return err
-	}
-
-	// Insert events
 	for _, event := range u.Events() {
 		eventEnvelope, err := event.ToEnvelope()
 		if err != nil {
 			return err
+		}
+
+		switch eventEnvelope.Type {
+		case user.UserCreatedEventType:
+			_, err = qtx.CreateUser(ctx, db.CreateUserParams{
+				ID:   u.ID(),
+				Name: u.Name(),
+			})
+			if err != nil {
+				return fmt.Errorf("failed to insert new user record: %w", err)
+			}
+		default:
+			return fmt.Errorf("unknown user event: %s", eventEnvelope.Type)
 		}
 
 		_, err = qtx.InsertEvent(ctx, db.InsertEventParams{

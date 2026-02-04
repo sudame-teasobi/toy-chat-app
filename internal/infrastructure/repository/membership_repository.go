@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
+	"github.com/oklog/ulid/v2"
 	"github.com/sudame/chat/internal/db"
 	"github.com/sudame/chat/internal/domain/membership"
 )
@@ -65,6 +67,17 @@ func (r *MembershipRepository) Save(ctx context.Context, m *membership.Membershi
 			if err != nil {
 				return err
 			}
+		default:
+			fmt.Errorf("unknown event type: %s", envelope.Type)
+		}
+
+		_, err = qtx.InsertEvent(ctx, db.InsertEventParams{
+			ID:        ulid.Make().String(),
+			EventType: envelope.Type,
+			Payload:   envelope.Payload,
+		})
+		if err != nil {
+			return err
 		}
 	}
 

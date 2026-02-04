@@ -8,6 +8,8 @@ import (
 
 var _ events.Event = (*UserCreatedEvent)(nil)
 
+const UserCreatedEventType string = "user.created"
+
 // UserCreatedEvent raised when a useris created.
 type UserCreatedEvent struct {
 	UserID string
@@ -22,7 +24,7 @@ func (u *UserCreatedEvent) ToEnvelope() (*events.EventEnvelope, error) {
 	}
 
 	return &events.EventEnvelope{
-		Type:    "user.created",
+		Type:    UserCreatedEventType,
 		Payload: payload,
 	}, nil
 }
