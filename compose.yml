@@ -176,6 +176,7 @@ services:
       KAFKA_BROKER: kafka:29092
       KAFKA_TOPIC: event-records-changefeed
       KAFKA_GROUP_ID: event-consumer-group
+      ROOM_SERVER: "http://write-server:8081"
 
   ##########################################
   # 開発用ツール: 81xx番台のポートを使用

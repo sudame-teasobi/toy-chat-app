@@ -6,7 +6,6 @@ import (
 
 	"github.com/sudame/chat/internal/domain/room"
 	"github.com/sudame/chat/internal/domain/user"
-	"github.com/sudame/chat/internal/util"
 )
 
 type CreateRoomService struct {
@@ -37,5 +36,5 @@ func (s *CreateRoomService) Exec(ctx context.Context, roomName string, creatorUs
 		return nil, fmt.Errorf("failed to save room: %w", err)
 	}
 
-	return util.ToPtr(r.ID()), nil
+	return new(r.ID()), nil
 }

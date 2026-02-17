@@ -68,7 +68,7 @@ func (r *MembershipRepository) Save(ctx context.Context, m *membership.Membershi
 				return err
 			}
 		default:
-			fmt.Errorf("unknown event type: %s", envelope.Type)
+			return fmt.Errorf("unknown event type: %s", envelope.Type)
 		}
 
 		_, err = qtx.InsertEvent(ctx, db.InsertEventParams{

@@ -18,10 +18,10 @@ type CreateUserResponse struct {
 }
 
 type CreateUserHandler struct {
-	service service.CreateUserService
+	service *service.CreateUserService
 }
 
-func NewCreateUserHandler(s service.CreateUserService) *CreateUserHandler {
+func NewCreateUserHandler(s *service.CreateUserService) *CreateUserHandler {
 	return &CreateUserHandler{
 		service: s,
 	}

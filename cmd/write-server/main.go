@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -15,6 +16,8 @@ import (
 )
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	slog.SetDefault(logger)
 	host := getEnv("DB_HOST", "localhost")
 	port := getEnv("DB_PORT", "4000")
 	user := getEnv("DB_USER", "root")
@@ -62,12 +65,15 @@ func main() {
 
 	createUserService := service.NewCreateUserService(userRepo)
 	createRoomService := service.NewCreateRoomService(userRepo, roomRepo)
+	checkRoomExistenceService := service.NewCheckRoomExistenceService(roomRepo)
 
-	createUserHandler := handler.NewCreateUserHandler(*createUserService)
-	createRoomHandler := handler.NewCreateRoomHandler(*createRoomService)
+	createUserHandler := handler.NewCreateUserHandler(createUserService)
+	createRoomHandler := handler.NewCreateRoomHandler(createRoomService)
+	checkRoomExistenceHandler := handler.NewCheckRoomExistenceHandler(checkRoomExistenceService)
 
 	e.POST("/create-user", createUserHandler.Handle)
 	e.POST("/create-chat-room", createRoomHandler.Handle)
+	e.POST("/check-room-existence", checkRoomExistenceHandler.Handle)
 
 	serverPort := getEnv("SERVER_PORT", "8080")
 	log.Printf("Starting server on port %s", serverPort)

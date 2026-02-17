@@ -6,14 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/segmentio/kafka-go"
 	"github.com/sudame/chat/internal/consumer"
+	"github.com/sudame/chat/internal/infrastructure/query"
 	"github.com/sudame/chat/internal/infrastructure/repository"
 	"github.com/sudame/chat/internal/service"
 	"github.com/sudame/chat/internal/ticdc"
+	"github.com/sudame/chat/pkg/httpclient"
 )
 
 func getEnv(key string, defaultValue string) string {
@@ -34,6 +37,8 @@ func main() {
 	password := getEnv("DB_PASSWORD", "")
 	dbName := getEnv("DB_NAME", "toy_chat_app")
 
+	roomServerBaseURL := getEnv("ROOM_SERVER", "")
+
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", user, password, host, port, dbName)
 
 	db, err := sql.Open("mysql", dsn)
@@ -52,10 +57,14 @@ func main() {
 	log.Println("Connected to TiDB successfully")
 
 	userRepo := repository.NewUserRepository(db)
-	roomRepo := repository.NewChatRoomRepository(db)
 	membershipRepo := repository.NewMembershipRepository(db)
 
-	createMembershipService := service.NewCreateMembershipService(userRepo, roomRepo, membershipRepo)
+	client := &http.Client{}
+	httpClient := httpclient.NewHTTPClient(client)
+
+	roomQuery := query.NewRoomQuery(httpClient, roomServerBaseURL)
+
+	createMembershipService := service.NewCreateMembershipService(userRepo, roomQuery, membershipRepo)
 
 	membershipConsumer := consumer.NewMembershipConsumer(createMembershipService)
 

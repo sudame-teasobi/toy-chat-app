@@ -19,12 +19,12 @@ type CreateRoomResponse struct {
 }
 
 type CreateRoomHandler struct {
-	service service.CreateRoomService
+	service *service.CreateRoomService
 }
 
-func NewCreateRoomHandler(createRoomService service.CreateRoomService) *CreateRoomHandler {
+func NewCreateRoomHandler(s *service.CreateRoomService) *CreateRoomHandler {
 	return &CreateRoomHandler{
-		service: createRoomService,
+		service: s,
 	}
 }
 

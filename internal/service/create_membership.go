@@ -11,14 +11,14 @@ import (
 
 type CreateMembershipService struct {
 	userRepo       user.Repository
-	roomRepo       room.Repository
+	roomQuery      room.Query
 	membershipRepo membership.Repository
 }
 
-func NewCreateMembershipService(userRepo user.Repository, roomRepo room.Repository, membershipRepo membership.Repository) *CreateMembershipService {
+func NewCreateMembershipService(userRepo user.Repository, roomQuery room.Query, membershipRepo membership.Repository) *CreateMembershipService {
 	return &CreateMembershipService{
 		userRepo:       userRepo,
-		roomRepo:       roomRepo,
+		roomQuery:      roomQuery,
 		membershipRepo: membershipRepo,
 	}
 }
@@ -31,9 +31,12 @@ func (s *CreateMembershipService) Exec(ctx context.Context, userID string, roomI
 	}
 
 	// ルームの存在確認
-	_, err = s.roomRepo.FindByID(ctx, roomID)
+	roomExistence, err := s.roomQuery.CheckRoomExistence(room.CheckRoomExistenceRequest{RoomID: roomID})
 	if err != nil {
-		return fmt.Errorf("failed to find room: %w", err)
+		return fmt.Errorf("failed to call room service: %w", err)
+	}
+	if !roomExistence.Existence {
+		return fmt.Errorf("failed to find room %s", roomID)
 	}
 
 	m, err := membership.CreateMembership(roomID, userID)
