@@ -61,7 +61,7 @@ func initializeTables(ctx context.Context, client *dynamodb.Client) error {
 	}
 
 	_, _, err = createTableIfNotExist(ctx, client, &dynamodb.CreateTableInput{
-		TableName: new("Members"),
+		TableName: new("Memberships"),
 		KeySchema: []types.KeySchemaElement{
 			{AttributeName: new("id"), KeyType: types.KeyTypeHash},
 		},
