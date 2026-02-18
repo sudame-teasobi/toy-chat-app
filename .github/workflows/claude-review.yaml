@@ -34,6 +34,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           use_bedrock: "true"
           claude_args: '--model "arn:aws:bedrock:ap-northeast-1:369264854262:application-inference-profile/0nd6go9xrzg0" --max-turns 20'
-          direct_prompt: |
+          prompt: |
             PR #${{ github.event.issue.number }} をレビューしてください。
             reviewing-pull-request スキルを使って、インラインコメントと総評を GitHub に投稿してください。
