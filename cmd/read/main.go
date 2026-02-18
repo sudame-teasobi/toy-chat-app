@@ -96,7 +96,13 @@ func main() {
 }
 
 func process(ctx context.Context, m kafka.Message, readModelConsumer *consumer.ReadModelConsumer) error {
-	log.Printf("message at topic/partition/offset %v/%v/%v: %s = %s\n", m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
+	slog.DebugContext(ctx, "processing message",
+		slog.String("topic", m.Topic),
+		slog.Int("partition", m.Partition),
+		slog.Int64("offset", m.Offset),
+		slog.String("key", string(m.Key)),
+		slog.String("value", string(m.Value)),
+	)
 	var e ticdc.Event
 	if err := json.Unmarshal(m.Value, &e); err != nil {
 		return fmt.Errorf("failed to unmarshal data on kafka: %w", err)
