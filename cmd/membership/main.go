@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -91,22 +92,39 @@ func main() {
 		default:
 		}
 
-		m, err := reader.ReadMessage(ctx)
+		m, err := reader.FetchMessage(ctx)
 		if err != nil {
-			log.Printf("Error: %s", err.Error())
+			slog.ErrorContext(ctx, "failed to fetch message", "err", err)
 			continue
 		}
 
-		log.Printf("message at topic/partition/offset %v/%v/%v: %s = %s\n", m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
-		var e ticdc.Event
-		err = json.Unmarshal(m.Value, &e)
-		if err != nil {
-			log.Printf("failed to unmarshal data on kafka: %s", err.Error())
+		if err := process(ctx, m, membershipConsumer); err != nil {
+			slog.ErrorContext(ctx, "failed to handle event", "err", err)
 			continue
 		}
-		err = membershipConsumer.Consume(ctx, e)
-		if err != nil {
-			log.Printf("Error: %s", err.Error())
+
+		if err := reader.CommitMessages(ctx, m); err != nil {
+			slog.ErrorContext(ctx, "failed to commit message", "err", err)
 		}
 	}
+
+}
+
+func process(ctx context.Context, m kafka.Message, membershipConsumer *consumer.MembershipConsumer) error {
+	slog.DebugContext(ctx, "processing message",
+		slog.String("topic", m.Topic),
+		slog.Int("partition", m.Partition),
+		slog.Int64("offset", m.Offset),
+		slog.String("key", string(m.Key)),
+		slog.String("value", string(m.Value)),
+	)
+	var e ticdc.Event
+	if err := json.Unmarshal(m.Value, &e); err != nil {
+		return fmt.Errorf("failed to unmarshal data on kafka: %w", err)
+	}
+	if err := membershipConsumer.Consume(ctx, e); err != nil {
+		return fmt.Errorf("failed to handle event: %w", err)
+	}
+
+	return nil
 }
