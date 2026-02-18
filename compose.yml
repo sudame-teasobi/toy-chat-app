@@ -178,6 +178,21 @@ services:
       KAFKA_GROUP_ID: event-consumer-group
       ROOM_SERVER: "http://write-server:8081"
 
+  read:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/read.dockerfile
+    depends_on:
+      dynamodb:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER: kafka:29092
+      KAFKA_TOPIC: event-records-changefeed
+      KAFKA_GROUP_ID: event-consumer-group
+      DYNAMODB_URL: "http://dynamodb:8000"
+
   ##########################################
   # 開発用ツール: 81xx番台のポートを使用
   ##########################################
