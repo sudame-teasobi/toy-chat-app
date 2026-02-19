@@ -1,6 +1,15 @@
 ---
 name: reviewing-pull-request
 description: Use when asked to review a PR, give feedback on code changes, or post review comments to GitHub in this repository
+allowed_tools:
+  - Bash(gh pr view:*)
+  - Bash(gh repo view:*)
+  - Bash(gh pr list:*)
+  - Bash(gh api:*)
+  - Bash(git diff:*)
+  - Bash(git log:*)
+  - Bash(git show:*)
+  - Bash(git branch:*)
 ---
 
 # PR レビュースキル
