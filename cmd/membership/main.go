@@ -61,9 +61,9 @@ func main() {
 	membershipRepo := repository.NewMembershipRepository(db)
 
 	client := &http.Client{}
-	httpClient := httpclient.NewHTTPClient(client)
+	httpClient := httpclient.NewHTTPClient(client, roomServerBaseURL)
 
-	roomQuery := query.NewRoomQuery(httpClient, roomServerBaseURL)
+	roomQuery := query.NewRoomQuery(httpClient)
 
 	createMembershipService := service.NewCreateMembershipService(userRepo, roomQuery, membershipRepo)
 

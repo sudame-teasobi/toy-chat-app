@@ -13,8 +13,8 @@ type HTTPClient struct {
 	baseURL string
 }
 
-func NewHTTPClient(client *http.Client) *HTTPClient {
-	return &HTTPClient{client: client}
+func NewHTTPClient(client *http.Client, baseURL string) *HTTPClient {
+	return &HTTPClient{client: client, baseURL: baseURL}
 }
 
 func Post[ReqBody, ResBody any](client *HTTPClient, path string, reqBody ReqBody) (ResBody, error) {
