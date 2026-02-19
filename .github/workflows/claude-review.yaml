@@ -42,7 +42,9 @@ jobs:
             Bash(gh api:*),
             Bash(git diff:*),
             Bash(git log:*),
-            Bash(git show:*)
+            Bash(git show:*),
+            Bash(git branch:*),
+            Skill(reviewing-pull-request:*)
           prompt: |
             PR #${{ github.event.issue.number }} をレビューしてください。
             reviewing-pull-request スキルを使って、インラインコメントと総評を GitHub に投稿してください。
