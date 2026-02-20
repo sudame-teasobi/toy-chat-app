@@ -11,7 +11,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/labstack/echo/v4 v4.15.0
 	github.com/oklog/ulid/v2 v2.1.1
-	github.com/segmentio/kafka-go v0.4.49
+	github.com/segmentio/kafka-go v0.4.50
 )
 
 require (
