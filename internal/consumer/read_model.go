@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/labstack/gommon/log"
 	"github.com/oklog/ulid/v2"
 	"github.com/sudame/chat/internal/domain/membership"
 	"github.com/sudame/chat/internal/domain/room"
@@ -105,42 +106,42 @@ func (c *ReadModelConsumer) Consume(ctx context.Context, event ticdc.Event) erro
 		var es string
 		err := json.Unmarshal(data.Payload, &es)
 		if err != nil {
-			slog.ErrorContext(ctx, "failed to construct payload to string", "error", err)
+			return fmt.Errorf("failed to construct payload to string: %w", err)
 		}
 		eb := []byte(es)
 		switch data.Type {
 		case room.ChatRoomCreatedEventType:
 			devent, err := extractEventData[room.ChatRoomCreatedEvent](eb)
 			if err != nil {
-				slog.ErrorContext(ctx, "failed to extract domain event", "error", err)
+				return fmt.Errorf("failed to extract domain event: %w")
 			}
 			err = handleRoomCreatedEvent(ctx, c.client, devent)
 			if err != nil {
-				slog.ErrorContext(ctx, "failed to handle room created event", "error", err)
+				return fmt.Errorf("failed to handle room created event: %w", err)
 			}
 			slog.DebugContext(ctx, "room created", "domain_data", devent)
 		case user.UserCreatedEventType:
 			devent, err := extractEventData[user.UserCreatedEvent](eb)
 			if err != nil {
-				slog.ErrorContext(ctx, "failed to extract domain event", "error", err)
+				return fmt.Errorf("failed to extract domain event: %w", err)
 			}
 			err = handleUserCreatedEvent(ctx, c.client, devent)
 			if err != nil {
-				slog.ErrorContext(ctx, "failed to handle user created event", "error", err)
+				return fmt.Errorf("failed to handle user created event: %w", err)
 			}
 			slog.DebugContext(ctx, "user created", "domain_data", devent)
 		case membership.MembershipCreatedEventType:
 			devent, err := extractEventData[membership.MembershipCreatedEvent](eb)
 			if err != nil {
-				slog.ErrorContext(ctx, "failed to extract domain event", "error", err)
+				return fmt.Errorf("failed to extract domain event: %w", err)
 			}
 			err = handleMembershipCreatedEvent(ctx, c.client, devent)
 			if err != nil {
-				slog.ErrorContext(ctx, "failed to handle membership created event", "error", err)
+				return fmt.Errorf("failed to handle membership created event: %w", err)
 			}
 			slog.DebugContext(ctx, "membership created", "domain_data", devent)
 		default:
-			slog.ErrorContext(ctx, "failed to handle event, unknown event type", "event_type", data.Type)
+			return fmt.Errorf("failed to handle event, unknown event type: event_type = %s", data.Type)
 		}
 
 	}
