@@ -39,6 +39,9 @@ func Post[ReqBody, ResBody any](client *HTTPClient, path string, reqBody ReqBody
 	if err != nil {
 		return zero, fmt.Errorf("failed to request: %w", err)
 	}
+	defer func() {
+		res.Body.Close()
+	}()
 
 	if res.StatusCode != http.StatusOK {
 		return zero, fmt.Errorf("failed to call server, status code: %d, message: ", res.StatusCode)
