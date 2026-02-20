@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/labstack/gommon/log"
 	"github.com/oklog/ulid/v2"
 	"github.com/sudame/chat/internal/domain/membership"
 	"github.com/sudame/chat/internal/domain/room"
@@ -113,7 +112,7 @@ func (c *ReadModelConsumer) Consume(ctx context.Context, event ticdc.Event) erro
 		case room.ChatRoomCreatedEventType:
 			devent, err := extractEventData[room.ChatRoomCreatedEvent](eb)
 			if err != nil {
-				return fmt.Errorf("failed to extract domain event: %w")
+				return fmt.Errorf("failed to extract domain event: %w", err)
 			}
 			err = handleRoomCreatedEvent(ctx, c.client, devent)
 			if err != nil {
