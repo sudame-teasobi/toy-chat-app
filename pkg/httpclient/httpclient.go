@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 )
 
@@ -40,7 +41,10 @@ func Post[ReqBody, ResBody any](client *HTTPClient, path string, reqBody ReqBody
 		return zero, fmt.Errorf("failed to request: %w", err)
 	}
 	defer func() {
-		res.Body.Close()
+		err := res.Body.Close()
+		if err != nil {
+			slog.Error("failed to close response body", "err", err)
+		}
 	}()
 
 	if res.StatusCode != http.StatusOK {
