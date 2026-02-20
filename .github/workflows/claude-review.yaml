@@ -34,17 +34,19 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           use_bedrock: "true"
-          claude_args: '--model "arn:aws:bedrock:ap-northeast-1:369264854262:application-inference-profile/0nd6go9xrzg0" --max-turns 20'
-          additional_permissions: |
-            Bash(gh pr view:*),
-            Bash(gh repo view:*),
-            Bash(gh pr list:*),
-            Bash(gh api:*),
-            Bash(git diff:*),
-            Bash(git log:*),
-            Bash(git show:*),
-            Bash(git branch:*),
-            Skill(reviewing-pull-request:*)
+          claude_args: |
+            --model "arn:aws:bedrock:ap-northeast-1:369264854262:application-inference-profile/0nd6go9xrzg0"
+            --max-turns 20
+            --allowedTools
+              Bash(gh pr view:*),
+              Bash(gh repo view:*),
+              Bash(gh pr list:*),
+              Bash(gh api:*),
+              Bash(git diff:*),
+              Bash(git log:*),
+              Bash(git show:*),
+              Bash(git branch:*),
+              Skill(reviewing-pull-request:*)
           prompt: |
             PR #${{ github.event.issue.number }} をレビューしてください。
             reviewing-pull-request スキルを使って、インラインコメントと総評を GitHub に投稿してください。
