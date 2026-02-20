@@ -26,15 +26,15 @@ type CheckRoomExistenceServiceResult struct {
 func (s *CheckRoomExistenceService) Exec(ctx context.Context, roomId string) (CheckRoomExistenceServiceResult, error) {
 	var zero CheckRoomExistenceServiceResult
 	var existence bool
+
 	_, err := s.roomRepo.FindByID(ctx, roomId)
-	if err != nil {
+
+	if err == nil {
 		existence = true
+	} else if errors.Is(err, room.ErrNotFound) {
+		existence = false
 	} else {
-		if errors.Is(err, room.ErrNotFound) {
-			existence = false
-		} else {
-			return zero, fmt.Errorf("failed to find room: %w", err)
-		}
+		return zero, fmt.Errorf("failed to find room: %w", err)
 	}
 
 	result := CheckRoomExistenceServiceResult{Existence: existence}
