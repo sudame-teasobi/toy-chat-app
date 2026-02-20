@@ -10,8 +10,9 @@ import (
 const MembershipCreatedEventType string = "membership.created"
 
 type MembershipCreatedEvent struct {
-	UserId     string
-	ChatRoomId string
+	Id         string `json:"id"`
+	UserId     string `json:"user_id"`
+	ChatRoomId string `json:"chat_room_id"`
 }
 
 // ToEnvelope implements [events.Event].
@@ -41,6 +42,7 @@ func CreateMembership(chatRoomId string, userId string) (*Membership, error) {
 	id := "membership-" + ulid.Make().String()
 
 	event := MembershipCreatedEvent{
+		Id:         id,
 		UserId:     userId,
 		ChatRoomId: chatRoomId,
 	}
