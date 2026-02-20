@@ -42,6 +42,9 @@ func (h *CheckRoomExistenceHandler) Handle(c echo.Context) (err error) {
 
 	log.Printf("[INFO] /check_room_existence: request received: room_id=%q", req.RoomID)
 
-	result := h.service.Exec(c.Request().Context(), req.RoomID)
+	result, err := h.service.Exec(c.Request().Context(), req.RoomID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
 	return c.JSON(http.StatusOK, CheckRoomExistenceResponse{Existence: result.Existence})
 }

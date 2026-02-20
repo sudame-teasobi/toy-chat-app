@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log/slog"
 
 	"github.com/sudame/chat/internal/domain/room"
@@ -21,9 +23,21 @@ type CheckRoomExistenceServiceResult struct {
 	Existence bool
 }
 
-func (s *CheckRoomExistenceService) Exec(ctx context.Context, roomId string) CheckRoomExistenceServiceResult {
+func (s *CheckRoomExistenceService) Exec(ctx context.Context, roomId string) (CheckRoomExistenceServiceResult, error) {
+	var zero CheckRoomExistenceServiceResult
+	var existence bool
+
 	_, err := s.roomRepo.FindByID(ctx, roomId)
-	result := CheckRoomExistenceServiceResult{Existence: err == nil}
+
+	if err == nil {
+		existence = true
+	} else if errors.Is(err, room.ErrNotFound) {
+		existence = false
+	} else {
+		return zero, fmt.Errorf("failed to find room: %w", err)
+	}
+
+	result := CheckRoomExistenceServiceResult{Existence: existence}
 	slog.DebugContext(ctx, "CheckRoomExistenceService executed", "room_id", roomId, "result", result)
-	return result
+	return result, nil
 }
