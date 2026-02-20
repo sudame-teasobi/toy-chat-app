@@ -8,12 +8,11 @@ import (
 )
 
 type RoomQuery struct {
-	client  *httpclient.HTTPClient
-	baseURL string
+	client *httpclient.HTTPClient
 }
 
-func NewRoomQuery(client *httpclient.HTTPClient, baseURL string) *RoomQuery {
-	return &RoomQuery{client: client, baseURL: baseURL}
+func NewRoomQuery(client *httpclient.HTTPClient) *RoomQuery {
+	return &RoomQuery{client: client}
 }
 
 const checkRoomExistencePath = "/check-room-existence"
@@ -21,7 +20,7 @@ const checkRoomExistencePath = "/check-room-existence"
 // CheckRoomExistence implements [room.Query].
 func (r *RoomQuery) CheckRoomExistence(req room.CheckRoomExistenceRequest) (room.CheckRoomExistenceResponse, error) {
 	var zero room.CheckRoomExistenceResponse
-	res, err := httpclient.Post[room.CheckRoomExistenceRequest, room.CheckRoomExistenceResponse](r.client, r.baseURL+checkRoomExistencePath, req)
+	res, err := httpclient.Post[room.CheckRoomExistenceRequest, room.CheckRoomExistenceResponse](r.client, checkRoomExistencePath, req)
 	if err != nil {
 		return zero, fmt.Errorf("failed to post: %w", err)
 	}

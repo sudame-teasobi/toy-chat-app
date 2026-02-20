@@ -12,8 +12,8 @@ const UserCreatedEventType string = "user.created"
 
 // UserCreatedEvent raised when a useris created.
 type UserCreatedEvent struct {
-	UserID string
-	Name   string
+	UserID string `json:"userId"`
+	Name   string `json:"name"`
 }
 
 // ToEnvelope implements [events.Event].

@@ -32,6 +32,16 @@ jobs:
 
       - uses: anthropics/claude-code-action@v1
         with:
-          github_token: ${{ steps.app-token.outputs.token }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           use_bedrock: "true"
           claude_args: '--model "arn:aws:bedrock:ap-northeast-1:369264854262:application-inference-profile/0nd6go9xrzg0" --max-turns 10'
+          additional_permissions: |
+            Bash(gh pr view:*),
+            Bash(gh repo view:*),
+            Bash(gh pr list:*),
+            Bash(gh api:*),
+            Bash(git diff:*),
+            Bash(git log:*),
+            Bash(git show:*),
+            Bash(git branch:*),
+            Skill(reviewing-pull-request:*)
