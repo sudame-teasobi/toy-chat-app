@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 
 	"github.com/sudame/chat/internal/domain/room"
 	"github.com/sudame/chat/internal/service"
@@ -25,12 +25,12 @@ func NewMembershipConsumer(service *service.CreateMembershipService) *Membership
 func (c *MembershipConsumer) Consume(ctx context.Context, event ticdc.Event) error {
 	for _, data := range event.Data {
 
-		log.Printf("data: %+v\n", data)
+		slog.DebugContext(ctx, "consumer", "data", data)
 		if data.Type != room.ChatRoomCreatedEventType {
-			return nil
+			continue
 		}
 
-		log.Printf("payload: %s\n", data.Payload)
+		slog.DebugContext(ctx, "consumer", "payload", data.Payload)
 		var es string
 		err := json.Unmarshal(data.Payload, &es)
 		if err != nil {
