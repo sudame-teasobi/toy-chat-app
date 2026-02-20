@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/oklog/ulid/v2"
 	"github.com/sudame/chat/internal/domain/membership"
 	"github.com/sudame/chat/internal/domain/room"
 	"github.com/sudame/chat/internal/domain/user"
@@ -82,9 +81,7 @@ func handleRoomCreatedEvent(ctx context.Context, client *dynamodb.Client, event 
 }
 
 func handleMembershipCreatedEvent(ctx context.Context, client *dynamodb.Client, event membership.MembershipCreatedEvent) error {
-	// FIXIT: membershipID をここで生成するのは意味不明なので要修正
-	membershipID := "membership:" + ulid.Make().String()
-	membership := Membership{Id: membershipID, RoomID: event.ChatRoomId, UserID: event.UserId}
+	membership := Membership{Id: event.Id, RoomID: event.ChatRoomId, UserID: event.UserId}
 	item, err := attributevalue.MarshalMap(membership)
 	if err != nil {
 		return fmt.Errorf("failed to construct attribute: %w", err)
