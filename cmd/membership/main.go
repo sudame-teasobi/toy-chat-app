@@ -8,7 +8,6 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
-	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/segmentio/kafka-go"
@@ -17,28 +16,23 @@ import (
 	"github.com/sudame/chat/internal/infrastructure/repository"
 	"github.com/sudame/chat/internal/service"
 	"github.com/sudame/chat/internal/ticdc"
+	"github.com/sudame/chat/pkg/env"
 	"github.com/sudame/chat/pkg/httpclient"
 )
-
-func getEnv(key string, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
-}
 
 func main() {
 	ctx := context.Background()
 
-	kafkaBroker := getEnv("KAFKA_BROKER", "localhost:9092")
+	kafkaBroker := env.GetEnv("KAFKA_BROKER").WithDefault("localhost:9092").Value()
+	kafkaGroupID := env.GetEnv("KAFKA_GROUP_ID").Value()
 
-	host := getEnv("DB_HOST", "localhost")
-	port := getEnv("DB_PORT", "4000")
-	user := getEnv("DB_USER", "root")
-	password := getEnv("DB_PASSWORD", "")
-	dbName := getEnv("DB_NAME", "toy_chat_app")
+	host := env.GetEnv("DB_HOST").WithDefault("localhost").Value()
+	port := env.GetEnv("DB_PORT").WithDefault("4000").Value()
+	user := env.GetEnv("DB_USER").WithDefault("root").Value()
+	password := env.GetEnv("DB_PASSWORD").WithDefault("").Value()
+	dbName := env.GetEnv("DB_NAME").WithDefault("toy_chat_app").Value()
 
-	roomServerBaseURL := getEnv("ROOM_SERVER", "")
+	roomServerBaseURL := env.GetEnv("ROOM_SERVER").Value()
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", user, password, host, port, dbName)
 
@@ -72,7 +66,7 @@ func main() {
 	reader := kafka.NewReader(
 		kafka.ReaderConfig{
 			Brokers:     []string{kafkaBroker},
-			GroupID:     "membership-consumer-group",
+			GroupID:     kafkaGroupID,
 			GroupTopics: []string{"event-records-changefeed"},
 		},
 	)

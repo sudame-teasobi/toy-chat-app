@@ -4,11 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/mysql"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/sudame/chat/pkg/env"
 )
 
 func main() {
@@ -19,11 +19,11 @@ func main() {
 	)
 	flag.Parse()
 
-	host := getEnv("DB_HOST", "localhost")
-	port := getEnv("DB_PORT", "4000")
-	user := getEnv("DB_USER", "root")
-	password := getEnv("DB_PASSWORD", "")
-	dbName := getEnv("DB_NAME", "toy_chat_app")
+	host := env.GetEnv("DB_HOST").WithDefault("localhost").Value()
+	port := env.GetEnv("DB_PORT").WithDefault("4000").Value()
+	user := env.GetEnv("DB_USER").WithDefault("root").Value()
+	password := env.GetEnv("DB_PASSWORD").WithDefault("").Value()
+	dbName := env.GetEnv("DB_NAME").WithDefault("toy_chat_app").Value()
 
 	// TiDB compatibility settings:
 	// - tidb_skip_isolation_level_check=1: Skip SERIALIZABLE isolation level check
@@ -91,11 +91,4 @@ func main() {
 	default:
 		log.Fatalf("Unknown command: %s", *command)
 	}
-}
-
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
 }

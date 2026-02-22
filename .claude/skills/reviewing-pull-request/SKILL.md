@@ -30,7 +30,7 @@ gh pr view --json number,headRefName,baseRefName
 gh repo view --json owner,name
 ```
 
-### Step 2: 既存のレビューコメントを確認する
+### Step 2: 既存のレビューコメントと議論を確認する
 
 ```bash
 # 過去のレビュー（総評）を確認
@@ -38,11 +38,24 @@ gh api repos/{owner}/{repo}/pulls/{PR番号}/reviews
 
 # 過去のインラインコメントを確認（position: null のものは解決済みまたは outdated）
 gh api repos/{owner}/{repo}/pulls/{PR番号}/comments
+
+# PR の一般コメント（issue comments）を確認 — 開発者の意見・反論・補足が含まれる
+gh api repos/{owner}/{repo}/issues/{PR番号}/comments
 ```
+
+**返信スレッドの確認:**
+- インラインコメント（`/pulls/{PR番号}/comments`）の `in_reply_to_id` フィールドに注目する
+- `in_reply_to_id` が設定されているコメントは、元のコメントへの返信である
+- スレッドの文脈（元の指摘 → 開発者の返信 → 再返信）を把握した上でレビューする
 
 **重複指摘のルール:**
 - `position` が値を持つコメント（まだ有効なスレッド）→ **同じ内容は指摘しない**
 - `position: null` のコメント（コードが変更されて outdated になったもの）→ 問題が再発していれば**再度指摘してよい**
+
+**過去の議論を尊重するルール:**
+- 過去のレビューで開発者が反論・説明している場合、その内容を理解した上でレビューする
+- 以前の指摘に対して開発者が納得できる反論をしている場合、同じ指摘を繰り返さない
+- 議論が未解決のスレッドがある場合、その議論を踏まえて判断する
 
 ### Step 3: コードを読んでレビュー内容を決める
 

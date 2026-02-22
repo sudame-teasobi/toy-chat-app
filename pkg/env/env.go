@@ -15,7 +15,7 @@ func (e *env) WithDefault(defaultValue string) *env {
 	return e
 }
 
-func (e *env) Value() (string, error) {
+func (e *env) SafeValue() (string, error) {
 	if e.value != "" {
 		return e.value, nil
 	}
@@ -26,6 +26,14 @@ func (e *env) Value() (string, error) {
 
 	return "", fmt.Errorf("failed to get env and default value is not set")
 
+}
+
+func (e *env) Value() string {
+	value, err := e.SafeValue()
+	if err != nil {
+		panic(fmt.Sprintf("failed to read environment: %s", err.Error()))
+	}
+	return value
 }
 
 func GetEnv(key string) *env {
