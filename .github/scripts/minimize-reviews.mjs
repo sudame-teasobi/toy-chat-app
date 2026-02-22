@@ -88,7 +88,7 @@ try {
   ]);
 
   const reviewsToMinimize = reviews.filter(
-    (r) => r.author?.login === "claude[bot]" && !r.isMinimized
+    (r) => r.author?.login === "claude" && !r.isMinimized
   );
 
   const commentsToMinimize = comments.filter(
