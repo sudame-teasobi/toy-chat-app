@@ -7,8 +7,8 @@ import (
 
 type Membership struct {
 	Id         string         `json:"id"`
-	ChatRoomId string         `json:"chatRoomId"`
-	UserId     string         `json:"userId"`
+	ChatRoomId string         `json:"chat_room_id"`
+	UserId     string         `json:"user_id"`
 	Events     []events.Event `json:"-"`
 }
 
