@@ -175,7 +175,7 @@ services:
       DB_NAME: toy_chat_app
       KAFKA_BROKER: kafka:29092
       KAFKA_TOPIC: event-records-changefeed
-      KAFKA_GROUP_ID: event-consumer-group
+      KAFKA_GROUP_ID: membership-consumer-group
       ROOM_SERVER: "http://write-server:8081"
 
   read:
@@ -190,7 +190,7 @@ services:
     environment:
       KAFKA_BROKER: kafka:29092
       KAFKA_TOPIC: event-records-changefeed
-      KAFKA_GROUP_ID: event-consumer-group
+      KAFKA_GROUP_ID: read-consumer-group
       DYNAMODB_URL: "http://dynamodb:8000"
 
   ##########################################
