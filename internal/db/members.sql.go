@@ -41,6 +41,28 @@ func (q *Queries) GetMember(ctx context.Context, id string) (ChatRoomMember, err
 	return i, err
 }
 
+const getMemberByChatRoomAndUser = `-- name: GetMemberByChatRoomAndUser :one
+SELECT id, user_id, chat_room_id, created_at, updated_at FROM chat_room_members WHERE chat_room_id = ? AND user_id = ? LIMIT 1
+`
+
+type GetMemberByChatRoomAndUserParams struct {
+	ChatRoomID string `json:"chat_room_id"`
+	UserID     string `json:"user_id"`
+}
+
+func (q *Queries) GetMemberByChatRoomAndUser(ctx context.Context, arg GetMemberByChatRoomAndUserParams) (ChatRoomMember, error) {
+	row := q.db.QueryRowContext(ctx, getMemberByChatRoomAndUser, arg.ChatRoomID, arg.UserID)
+	var i ChatRoomMember
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ChatRoomID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getMembersByChatRoomID = `-- name: GetMembersByChatRoomID :many
 SELECT id, user_id, chat_room_id, created_at, updated_at FROM chat_room_members WHERE chat_room_id = ?
 `
