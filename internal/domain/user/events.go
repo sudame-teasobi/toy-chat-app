@@ -12,7 +12,7 @@ const UserCreatedEventType string = "user.created"
 
 // UserCreatedEvent raised when a useris created.
 type UserCreatedEvent struct {
-	UserID string `json:"userId"`
+	UserID string `json:"user_id"`
 	Name   string `json:"name"`
 }
 
