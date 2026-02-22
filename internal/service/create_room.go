@@ -36,5 +36,6 @@ func (s *CreateRoomService) Exec(ctx context.Context, roomName string, creatorUs
 		return nil, fmt.Errorf("failed to save room: %w", err)
 	}
 
-	return new(r.ID()), nil
+	id := r.ID()
+	return &id, nil
 }

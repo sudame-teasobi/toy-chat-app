@@ -57,7 +57,8 @@ func handleUserCreatedEvent(ctx context.Context, client *dynamodb.Client, event 
 		return fmt.Errorf("failed to construct attribute: %w", err)
 	}
 
-	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{Item: item, TableName: new("Users")})
+	tableName := "Users"
+	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{Item: item, TableName: &tableName})
 	if err != nil {
 		return fmt.Errorf("failed to put item: %w", err)
 	}
@@ -72,7 +73,8 @@ func handleRoomCreatedEvent(ctx context.Context, client *dynamodb.Client, event 
 		return fmt.Errorf("failed to construct attribute: %w", err)
 	}
 
-	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{Item: item, TableName: new("Rooms")})
+	tableName := "Rooms"
+	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{Item: item, TableName: &tableName})
 	if err != nil {
 		return fmt.Errorf("failed to put item: %w", err)
 	}
@@ -87,7 +89,8 @@ func handleMembershipCreatedEvent(ctx context.Context, client *dynamodb.Client, 
 		return fmt.Errorf("failed to construct attribute: %w", err)
 	}
 
-	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{Item: item, TableName: new("Memberships")})
+	tableName := "Memberships"
+	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{Item: item, TableName: &tableName})
 	if err != nil {
 		return fmt.Errorf("failed to put item: %w", err)
 	}
