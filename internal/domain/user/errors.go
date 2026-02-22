@@ -3,6 +3,6 @@ package user
 import "errors"
 
 var (
-	ErrNotFound  = errors.New("ユーザーが存在しません")
-	ErrEmptyName = errors.New("ユーザー名が空です")
+	ErrNotFound  = errors.New("user not found")
+	ErrEmptyName = errors.New("user name is empty")
 )
