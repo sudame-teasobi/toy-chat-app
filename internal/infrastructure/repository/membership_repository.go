@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/oklog/ulid/v2"
@@ -28,6 +29,9 @@ func NewMembershipRepository(database *sql.DB) *MembershipRepository {
 func (r *MembershipRepository) FindById(ctx context.Context, id string) (*membership.Membership, error) {
 	row, err := r.queries.GetMember(ctx, id)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, membership.ErrNotFound
+		}
 		return nil, err
 	}
 
