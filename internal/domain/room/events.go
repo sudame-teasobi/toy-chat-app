@@ -14,9 +14,9 @@ const ChatRoomCreatedEventType string = "chatroom.created"
 
 // ChatRoomCreatedEvent is raised when a chat room is created.
 type ChatRoomCreatedEvent struct {
-	ChatRoomID    string `json:"chatRoomId"`
+	ChatRoomID    string `json:"chat_room_id"`
 	Name          string `json:"name"`
-	CreatorUserID string `json:"creatorUserId"`
+	CreatorUserID string `json:"creator_user_id"`
 }
 
 func (e *ChatRoomCreatedEvent) ToEnvelope() (*events.EventEnvelope, error) {
