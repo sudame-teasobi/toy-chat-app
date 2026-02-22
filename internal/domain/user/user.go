@@ -35,9 +35,14 @@ func NewUser(name string) (*User, error) {
 // ReconstructUser reconstructs a User from persistence.
 func ReconstructUser(id string, name string) *User {
 	return &User{
-		id:   id,
-		name: name,
+		id:     id,
+		name:   name,
+		events: []events.Event{},
 	}
+}
+
+func (u *User) ClearEvents() {
+	u.events = []events.Event{}
 }
 
 func (u *User) ID() string             { return u.id }

@@ -28,3 +28,16 @@ func CreateMembership(chatRoomId string, userId string) (*Membership, error) {
 		Events:     []events.Event{&event},
 	}, nil
 }
+
+func ReconstructMembership(id string, chatRoomID string, userID string) *Membership {
+	return &Membership{
+		Id:         id,
+		ChatRoomId: chatRoomID,
+		UserId:     userID,
+		Events:     []events.Event{},
+	}
+}
+
+func (m *Membership) ClearEvents() {
+	m.Events = []events.Event{}
+}

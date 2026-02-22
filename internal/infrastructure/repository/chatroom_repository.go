@@ -28,17 +28,17 @@ func NewChatRoomRepository(database *sql.DB) *ChatRoomRepository {
 
 // Save persists a chat room and its events to TiDB.
 // It processes events to determine which operations to perform.
-func (r *ChatRoomRepository) Save(ctx context.Context, cr *room.Room) error {
-	tx, err := r.db.BeginTx(ctx, nil)
+func (repo *ChatRoomRepository) Save(ctx context.Context, r *room.Room) error {
+	tx, err := repo.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	qtx := r.queries.WithTx(tx)
+	qtx := repo.queries.WithTx(tx)
 
 	// Process events to determine operations
-	for _, event := range cr.Events() {
+	for _, event := range r.Events() {
 		envelope, err := event.ToEnvelope()
 		if err != nil {
 			return err
@@ -47,8 +47,8 @@ func (r *ChatRoomRepository) Save(ctx context.Context, cr *room.Room) error {
 		case room.ChatRoomCreatedEventType:
 			// Insert chat room only when ChatRoomCreatedEvent exists
 			_, err = qtx.CreateChatRoom(ctx, db.CreateChatRoomParams{
-				ID:   cr.ID(),
-				Name: cr.Name(),
+				ID:   r.ID(),
+				Name: r.Name(),
 			})
 			if err != nil {
 				return err
@@ -65,12 +65,13 @@ func (r *ChatRoomRepository) Save(ctx context.Context, cr *room.Room) error {
 		}
 	}
 
+	r.ClearEvents()
 	return tx.Commit()
 }
 
 // FindByID retrieves a chat room by ID from TiDB.
-func (r *ChatRoomRepository) FindByID(ctx context.Context, id string) (*room.Room, error) {
-	row, err := r.queries.GetChatRoom(ctx, id)
+func (repo *ChatRoomRepository) FindByID(ctx context.Context, id string) (*room.Room, error) {
+	row, err := repo.queries.GetChatRoom(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, room.ErrNotFound

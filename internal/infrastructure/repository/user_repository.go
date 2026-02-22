@@ -67,6 +67,7 @@ func (r *UserRepository) Save(ctx context.Context, u *user.User) error {
 		}
 	}
 
+	u.ClearEvents()
 	return tx.Commit()
 }
 
