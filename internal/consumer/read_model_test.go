@@ -28,11 +28,8 @@ func newMockDynamoDBClient(handler http.Handler) (*dynamodb.Client, *httptest.Se
 				SessionToken:    "",
 			}, nil
 		}),
-		EndpointResolverWithOptions: aws.EndpointResolverWithOptionsFunc( //nolint:staticcheck
-			func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-				return aws.Endpoint{URL: srv.URL}, nil //nolint:staticcheck
-			},
-		),
+	}, func(o *dynamodb.Options) {
+		o.BaseEndpoint = &srv.URL
 	})
 	return client, srv
 }
