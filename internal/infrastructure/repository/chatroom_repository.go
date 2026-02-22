@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/oklog/ulid/v2"
 	"github.com/sudame/chat/internal/db"
@@ -71,7 +72,7 @@ func (r *ChatRoomRepository) Save(ctx context.Context, cr *room.Room) error {
 func (r *ChatRoomRepository) FindByID(ctx context.Context, id string) (*room.Room, error) {
 	row, err := r.queries.GetChatRoom(ctx, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, room.ErrNotFound
 		}
 		return nil, err
