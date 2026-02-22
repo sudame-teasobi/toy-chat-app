@@ -17,6 +17,7 @@ import (
 	"github.com/sudame/chat/internal/infrastructure/repository"
 	"github.com/sudame/chat/internal/service"
 	"github.com/sudame/chat/internal/ticdc"
+	"github.com/sudame/chat/pkg/env"
 	"github.com/sudame/chat/pkg/httpclient"
 )
 
@@ -31,6 +32,7 @@ func main() {
 	ctx := context.Background()
 
 	kafkaBroker := getEnv("KAFKA_BROKER", "localhost:9092")
+	kafkaGroupID := env.GetEnv("KAFKA_GROUP_ID").Value()
 
 	host := getEnv("DB_HOST", "localhost")
 	port := getEnv("DB_PORT", "4000")
@@ -72,7 +74,7 @@ func main() {
 	reader := kafka.NewReader(
 		kafka.ReaderConfig{
 			Brokers:     []string{kafkaBroker},
-			GroupID:     "membership-consumer-group",
+			GroupID:     kafkaGroupID,
 			GroupTopics: []string{"event-records-changefeed"},
 		},
 	)
