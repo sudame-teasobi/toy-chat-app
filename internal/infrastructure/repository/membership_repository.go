@@ -85,5 +85,6 @@ func (r *MembershipRepository) Save(ctx context.Context, m *membership.Membershi
 		}
 	}
 
+	m.ClearEvents()
 	return tx.Commit()
 }

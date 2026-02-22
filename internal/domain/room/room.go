@@ -46,15 +46,15 @@ func ReconstructRoom(id string, name string) *Room {
 	}
 }
 
-func (cr *Room) ID() string   { return cr.id }
-func (cr *Room) Name() string { return cr.name }
+func (r *Room) ID() string   { return r.id }
+func (r *Room) Name() string { return r.name }
 
 // Events returns all recorded domain events.
-func (cr *Room) Events() []events.Event {
-	return cr.events
+func (r *Room) Events() []events.Event {
+	return r.events
 }
 
 // ClearEvents clears recorded events after persistence.
-func (cr *Room) ClearEvents() {
-	cr.events = make([]events.Event, 0)
+func (r *Room) ClearEvents() {
+	r.events = make([]events.Event, 0)
 }
