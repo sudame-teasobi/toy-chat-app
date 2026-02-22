@@ -13,16 +13,20 @@ import (
 	"github.com/sudame/chat/internal/handler"
 	"github.com/sudame/chat/internal/infrastructure/repository"
 	"github.com/sudame/chat/internal/service"
+	"github.com/sudame/chat/pkg/env"
 )
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	slog.SetDefault(logger)
-	host := getEnv("DB_HOST", "localhost")
-	port := getEnv("DB_PORT", "4000")
-	user := getEnv("DB_USER", "root")
-	password := getEnv("DB_PASSWORD", "")
-	dbName := getEnv("DB_NAME", "toy_chat_app")
+
+	host := env.GetEnv("DB_HOST").WithDefault("localhost").Value()
+	port := env.GetEnv("DB_PORT").WithDefault("4000").Value()
+	user := env.GetEnv("DB_USER").WithDefault("root").Value()
+	password := env.GetEnv("DB_PASSWORD").WithDefault("").Value()
+	dbName := env.GetEnv("DB_NAME").WithDefault("toy_chat_app").Value()
+
+	serverPort := env.GetEnv("SERVER_PORT").WithDefault("8080").Value()
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", user, password, host, port, dbName)
 
@@ -75,16 +79,8 @@ func main() {
 	e.POST("/create-chat-room", createRoomHandler.Handle)
 	e.POST("/check-room-existence", checkRoomExistenceHandler.Handle)
 
-	serverPort := getEnv("SERVER_PORT", "8080")
 	log.Printf("Starting server on port %s", serverPort)
 	if err := e.Start(":" + serverPort); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
-}
-
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
 }

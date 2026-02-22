@@ -22,16 +22,8 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	slog.SetDefault(logger)
 
-	dynamodbURL, err := env.GetEnv("DYNAMODB_URL").SafeValue()
-	if err != nil {
-		panic("failed to get env: DYNAMODB_URL")
-	}
-
-	kafkaBroker, err := env.GetEnv("KAFKA_BROKER").WithDefault("localhost:9092").SafeValue()
-	if err != nil {
-		log.Fatalf("failed to get env KAFKA_BROKER: %s", err)
-	}
-
+	dynamodbURL := env.GetEnv("DYNAMODB_URL").Value()
+	kafkaBroker := env.GetEnv("KAFKA_BROKER").WithDefault("localhost:9092").Value()
 	kafkaGroupID := env.GetEnv("KAFKA_GROUP_ID").Value()
 
 	slog.DebugContext(ctx, "dynamodb", "dynamodb_url", dynamodbURL)
