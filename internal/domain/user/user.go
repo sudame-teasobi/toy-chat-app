@@ -32,7 +32,7 @@ func NewUser(name string) (*User, error) {
 	return usr, nil
 }
 
-// ReconstructChatRoom reconstructs a ChatRoom from persistence.
+// ReconstructUser reconstructs a User from persistence.
 func ReconstructUser(id string, name string) *User {
 	return &User{
 		id:   id,
