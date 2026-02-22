@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/oklog/ulid/v2"
@@ -73,7 +74,7 @@ func (r *UserRepository) Save(ctx context.Context, u *user.User) error {
 func (r *UserRepository) FindByID(ctx context.Context, id string) (*user.User, error) {
 	row, err := r.queries.GetUser(ctx, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, user.ErrNotFound
 		}
 		return nil, err
