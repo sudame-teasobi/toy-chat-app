@@ -9,6 +9,8 @@ permissions:
 on:
   issue_comment:
     types: [created]
+  pull_request_review_comment:
+    types: [created]
   issues:
     types: [opened]
 
@@ -16,6 +18,7 @@ jobs:
   claude:
     if: |
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'issues' && contains(github.event.issue.body, '@claude'))
     runs-on: ubuntu-latest
     env:
@@ -34,14 +37,16 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           use_bedrock: "true"
-          claude_args: '--model "arn:aws:bedrock:ap-northeast-1:369264854262:application-inference-profile/0nd6go9xrzg0" --max-turns 10'
-          additional_permissions: |
-            Bash(gh pr view:*),
-            Bash(gh repo view:*),
-            Bash(gh pr list:*),
-            Bash(gh api:*),
-            Bash(git diff:*),
-            Bash(git log:*),
-            Bash(git show:*),
-            Bash(git branch:*),
-            Skill(reviewing-pull-request:*)
+          claude_args: |
+            --model "arn:aws:bedrock:ap-northeast-1:369264854262:application-inference-profile/0nd6go9xrzg0"
+            --max-turns 10
+            --allowedTools
+              Bash(gh pr view:*),
+              Bash(gh repo view:*),
+              Bash(gh pr list:*),
+              Bash(gh api:*),
+              Bash(git diff:*),
+              Bash(git log:*),
+              Bash(git show:*),
+              Bash(git branch:*),
+              Skill(reviewing-pull-request:*)
