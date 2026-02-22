@@ -24,6 +24,7 @@ jobs:
 
       - uses: anthropics/claude-code-action@v1
         with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_OAUTH?TOKEN }}
           claude_args: |
             --max-turns 20
             --allowedTools
@@ -40,5 +41,3 @@ jobs:
             PR #${{ github.event.issue.number }} をレビューしてください。
             レビュー前に、PR の過去のコメント・レビュー・インラインコメントへの返信をすべて確認し、開発者の意見や反論を理解した上でレビューしてください。
             /reviewing-pull-request を使って、インラインコメントと総評を GitHub に投稿してください。
-        env:
-          CLAUDE_OAUTH_TOKEN: ${{ secrets.CLAUDE_OAUTH_TOKEN }}
