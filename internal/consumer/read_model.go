@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/sudame/chat/internal/domain/membership"
 	"github.com/sudame/chat/internal/domain/room"
 	"github.com/sudame/chat/internal/domain/user"
@@ -34,30 +35,52 @@ func extractEventData[EventType any](data json.RawMessage) (EventType, error) {
 	return devent, nil
 }
 
-type User struct {
-	Id   string `dynamodbav:"id"`
-	Name string `dynamodbav:"name"`
+type UserProfile struct {
+	PK     string `dynamodbav:"PK"` // USER#<id>
+	SK     string `dynamodbav:"SK"` // PROFILE
+	UserID string `dynamodbav:"user_id"`
+	Name   string `dynamodbav:"name"`
 }
 
-type Room struct {
-	Id   string `dynamodbav:"id"`
-	Name string `dynamodbav:"name"`
+type RoomMetadata struct {
+	PK     string `dynamodbav:"PK"` // ROOM#<id>
+	SK     string `dynamodbav:"SK"` // METADATA
+	RoomID string `dynamodbav:"room_id"`
+	Name   string `dynamodbav:"name"`
+}
+
+type JoinedRoom struct {
+	PK           string `dynamodbav:"PK"` // USER#<id>
+	SK           string `dynamodbav:"SK"` // ROOM#<id>
+	MembershipID string `dynamodbav:"membership_id"`
+	RoomID       string `dynamodbav:"room_id"`
+	UserID       string `dynamodbav:"user_id"`
 }
 
 type Membership struct {
-	Id     string `dynamodbav:"id"`
-	RoomID string `dynamodbav:"room_id"`
-	UserID string `dynamodbav:"user_id"`
+	PK           string `dynamodbav:"PK"` // ROOM#<id>
+	SK           string `dynamodbav:"SK"` // USER#<id>
+	MembershipID string `dynamodbav:"membership_id"`
+	RoomID       string `dynamodbav:"room_id"`
+	UserID       string `dynamodbav:"user_id"`
 }
 
+var tableName = "ToyChatApp"
+
 func handleUserCreatedEvent(ctx context.Context, client *dynamodb.Client, event user.UserCreatedEvent) error {
-	user := User{Id: event.UserID, Name: event.Name}
-	item, err := attributevalue.MarshalMap(user)
-	if err != nil {
-		return fmt.Errorf("failed to construct attribute: %w", err)
+	user := UserProfile{
+		PK:     "USER#" + event.UserID,
+		SK:     "PROFILE",
+		UserID: event.UserID,
+		Name:   event.Name,
 	}
 
-	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{Item: item, TableName: new("Users")})
+	item, err := attributevalue.MarshalMap(user)
+	if err != nil {
+		return fmt.Errorf("failed to marshal user: %w", err)
+	}
+
+	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{Item: item, TableName: &tableName})
 	if err != nil {
 		return fmt.Errorf("failed to put item: %w", err)
 	}
@@ -66,13 +89,18 @@ func handleUserCreatedEvent(ctx context.Context, client *dynamodb.Client, event 
 }
 
 func handleRoomCreatedEvent(ctx context.Context, client *dynamodb.Client, event room.ChatRoomCreatedEvent) error {
-	room := Room{Id: event.ChatRoomID, Name: event.Name}
-	item, err := attributevalue.MarshalMap(room)
+	roomMetadata := RoomMetadata{
+		PK:     "ROOM#" + event.ChatRoomID,
+		SK:     "METADATA",
+		RoomID: event.ChatRoomID,
+		Name:   event.Name,
+	}
+	item, err := attributevalue.MarshalMap(roomMetadata)
 	if err != nil {
-		return fmt.Errorf("failed to construct attribute: %w", err)
+		return fmt.Errorf("failed to marshal room: %w", err)
 	}
 
-	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{Item: item, TableName: new("Rooms")})
+	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{Item: item, TableName: &tableName})
 	if err != nil {
 		return fmt.Errorf("failed to put item: %w", err)
 	}
@@ -81,15 +109,64 @@ func handleRoomCreatedEvent(ctx context.Context, client *dynamodb.Client, event 
 }
 
 func handleMembershipCreatedEvent(ctx context.Context, client *dynamodb.Client, event membership.MembershipCreatedEvent) error {
-	membership := Membership{Id: event.Id, RoomID: event.ChatRoomId, UserID: event.UserId}
-	item, err := attributevalue.MarshalMap(membership)
+	joinedRoom := JoinedRoom{
+		PK:           "USER#" + event.UserId,
+		SK:           "ROOM#" + event.ChatRoomId,
+		MembershipID: event.Id,
+		RoomID:       event.ChatRoomId,
+		UserID:       event.UserId,
+	}
+	membership := Membership{
+		PK:           "ROOM#" + event.ChatRoomId,
+		SK:           "USER#" + event.UserId,
+		MembershipID: event.Id,
+		RoomID:       event.ChatRoomId,
+		UserID:       event.UserId,
+	}
+	joinedRoomAv, err := attributevalue.MarshalMap(joinedRoom)
 	if err != nil {
-		return fmt.Errorf("failed to construct attribute: %w", err)
+		return fmt.Errorf("failed to marshal joined room: %w", err)
+	}
+	membershipAv, err := attributevalue.MarshalMap(membership)
+	if err != nil {
+		return fmt.Errorf("failed to marshal membership: %w", err)
 	}
 
-	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{Item: item, TableName: new("Memberships")})
+	_, err = client.TransactWriteItems(ctx, &dynamodb.TransactWriteItemsInput{
+		TransactItems: []types.TransactWriteItem{
+			{
+				Put: &types.Put{
+					Item:                                joinedRoomAv,
+					TableName:                           &tableName,
+					ConditionExpression:                 nil,
+					ExpressionAttributeNames:            nil,
+					ExpressionAttributeValues:           nil,
+					ReturnValuesOnConditionCheckFailure: types.ReturnValuesOnConditionCheckFailureNone,
+				},
+				ConditionCheck: nil,
+				Delete:         nil,
+				Update:         nil,
+			},
+			{
+				Put: &types.Put{
+					Item:                                membershipAv,
+					TableName:                           &tableName,
+					ConditionExpression:                 nil,
+					ExpressionAttributeNames:            nil,
+					ExpressionAttributeValues:           nil,
+					ReturnValuesOnConditionCheckFailure: types.ReturnValuesOnConditionCheckFailureNone,
+				},
+				ConditionCheck: nil,
+				Delete:         nil,
+				Update:         nil,
+			},
+		},
+		ClientRequestToken:          nil,
+		ReturnConsumedCapacity:      types.ReturnConsumedCapacityNone,
+		ReturnItemCollectionMetrics: types.ReturnItemCollectionMetricsNone,
+	})
 	if err != nil {
-		return fmt.Errorf("failed to put item: %w", err)
+		return fmt.Errorf("failed to transact write items: %w", err)
 	}
 
 	return nil
