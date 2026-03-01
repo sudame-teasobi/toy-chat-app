@@ -100,7 +100,7 @@ func handleRoomCreatedEvent(ctx context.Context, client *dynamodb.Client, event 
 		return fmt.Errorf("failed to construct attribute: %w", err)
 	}
 
-	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{Item: item, TableName: new("Rooms")})
+	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{Item: item, TableName: &tableName})
 	if err != nil {
 		return fmt.Errorf("failed to put item: %w", err)
 	}
@@ -132,17 +132,39 @@ func handleMembershipCreatedEvent(ctx context.Context, client *dynamodb.Client, 
 		return fmt.Errorf("failed to marshal membership: %w", err)
 	}
 
-	_, err = client.BatchWriteItem(ctx, &dynamodb.BatchWriteItemInput{
-		RequestItems: map[string][]types.WriteRequest{
-			tableName: []types.WriteRequest{
-				types.WriteRequest{PutRequest: &types.PutRequest{Item: joinedRoomAv}},
-				types.WriteRequest{PutRequest: &types.PutRequest{Item: membershipAv}},
+	_, err = client.TransactWriteItems(ctx, &dynamodb.TransactWriteItemsInput{
+		TransactItems: []types.TransactWriteItem{
+			{
+				Put: &types.Put{
+					Item:                                joinedRoomAv,
+					TableName:                           &tableName,
+					ConditionExpression:                 nil,
+					ExpressionAttributeNames:            nil,
+					ExpressionAttributeValues:           nil,
+					ReturnValuesOnConditionCheckFailure: types.ReturnValuesOnConditionCheckFailureNone,
+				},
+				ConditionCheck: nil,
+				Delete:         nil,
+				Update:         nil,
+			},
+			{
+				Put: &types.Put{
+					Item:                                membershipAv,
+					TableName:                           &tableName,
+					ConditionExpression:                 nil,
+					ExpressionAttributeNames:            nil,
+					ExpressionAttributeValues:           nil,
+					ReturnValuesOnConditionCheckFailure: types.ReturnValuesOnConditionCheckFailureNone,
+				},
+				ConditionCheck: nil,
+				Delete:         nil,
+				Update:         nil,
 			},
 		},
+		ClientRequestToken:          nil,
 		ReturnConsumedCapacity:      types.ReturnConsumedCapacityNone,
 		ReturnItemCollectionMetrics: types.ReturnItemCollectionMetricsNone,
 	})
-
 	if err != nil {
 		return fmt.Errorf("failed to put item: %w", err)
 	}
