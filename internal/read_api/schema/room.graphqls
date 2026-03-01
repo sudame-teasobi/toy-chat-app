@@ -1,0 +1,19 @@
+type Room {
+  name: String!
+  members(first: Int, after: String, last: Int, before: String): RoomMemberConnection!
+}
+
+type RoomEdge {
+  node: Room!
+  cursor: String!
+}
+
+type RoomConnection {
+  edges: [RoomEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  rooms(first: Int, after: String, last: Int, before: String): RoomConnection!
+}

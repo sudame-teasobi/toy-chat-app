@@ -1,0 +1,10 @@
+[[language]]
+name = "go"
+roots = ["go.mod"]
+auto-format = true
+formatter = ["gofmt"]
+comment-token = "//"
+language-servers = [ "gopls", "golangci-lint-lsp" ]
+
+[language-server.gopls.config]
+directoryFilters = ["-internal/read_api/model/models_gen.go", "-internal/read_api/graph/generated.go"]

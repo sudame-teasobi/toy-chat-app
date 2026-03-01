@@ -1,3 +1,9 @@
 version: "2"
 
+linters:
+  exclusions:
+    paths:
+      - "internal/read_api/model/models_gen.go"
+      - "internal/read_api/graph/generated.go"
+
 
