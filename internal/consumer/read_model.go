@@ -52,7 +52,7 @@ type RoomMetadata struct {
 type JoinedRoom struct {
 	PK           string `dynamodbav:"PK"` // USER#<id>
 	SK           string `dynamodbav:"SK"` // ROOM#<id>
-	MembershipId string `dynamodbav:"membership_id"`
+	MembershipID string `dynamodbav:"membership_id"`
 	RoomID       string `dynamodbav:"room_id"`
 	UserID       string `dynamodbav:"user_id"`
 }
@@ -60,7 +60,7 @@ type JoinedRoom struct {
 type Membership struct {
 	PK           string `dynamodbav:"PK"` // ROOM#<id>
 	SK           string `dynamodbav:"SK"` // USER#<id>
-	MembershipId string `dynamodbav:"membership_id"`
+	MembershipID string `dynamodbav:"membership_id"`
 	RoomID       string `dynamodbav:"room_id"`
 	UserID       string `dynamodbav:"user_id"`
 }
@@ -97,7 +97,7 @@ func handleRoomCreatedEvent(ctx context.Context, client *dynamodb.Client, event 
 	}
 	item, err := attributevalue.MarshalMap(roomMetadata)
 	if err != nil {
-		return fmt.Errorf("failed to construct attribute: %w", err)
+		return fmt.Errorf("failed to marshal room: %w", err)
 	}
 
 	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{Item: item, TableName: &tableName})
@@ -112,14 +112,14 @@ func handleMembershipCreatedEvent(ctx context.Context, client *dynamodb.Client, 
 	joinedRoom := JoinedRoom{
 		PK:           "USER#" + event.UserId,
 		SK:           "ROOM#" + event.ChatRoomId,
-		MembershipId: event.Id,
+		MembershipID: event.Id,
 		RoomID:       event.ChatRoomId,
 		UserID:       event.UserId,
 	}
 	membership := Membership{
 		PK:           "ROOM#" + event.ChatRoomId,
 		SK:           "USER#" + event.UserId,
-		MembershipId: event.Id,
+		MembershipID: event.Id,
 		RoomID:       event.ChatRoomId,
 		UserID:       event.UserId,
 	}
@@ -166,7 +166,7 @@ func handleMembershipCreatedEvent(ctx context.Context, client *dynamodb.Client, 
 		ReturnItemCollectionMetrics: types.ReturnItemCollectionMetricsNone,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to put item: %w", err)
+		return fmt.Errorf("failed to transact write items: %w", err)
 	}
 
 	return nil
