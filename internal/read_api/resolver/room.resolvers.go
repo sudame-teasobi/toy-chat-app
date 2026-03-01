@@ -9,36 +9,63 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/sudame/chat/internal/consts"
 	"github.com/sudame/chat/internal/read_api/graph"
+	"github.com/sudame/chat/internal/read_api/middleware"
 	"github.com/sudame/chat/internal/read_api/model"
 )
 
+type JoinedRoom struct {
+	PK           string `dynamodbav:"PK"` // USER#<id>
+	SK           string `dynamodbav:"SK"` // ROOM#<id>
+	MembershipID string `dynamodbav:"membership_id"`
+	RoomID       string `dynamodbav:"room_id"`
+	UserID       string `dynamodbav:"user_id"`
+}
+
 // Rooms is the resolver for the rooms field.
 func (r *queryResolver) Rooms(ctx context.Context, first *int32, after *string, last *int32, before *string) (*model.RoomConnection, error) {
+	userID, err := middleware.GetUserID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user ID: %w", err)
+	}
+
 	result, err := r.DynamoDBClient.Query(ctx, &dynamodb.QueryInput{
-		TableName:                 new(consts.DynamoDBUserTableName),
-		AttributesToGet:           nil,
-		ConditionalOperator:       "",
-		ConsistentRead:            new(false),
-		ExclusiveStartKey:         nil,
-		ExpressionAttributeNames:  nil,
-		ExpressionAttributeValues: nil,
-		FilterExpression:          nil,
-		IndexName:                 nil,
-		KeyConditionExpression:    nil,
-		KeyConditions:             nil,
-		Limit:                     nil,
-		ProjectionExpression:      nil,
-		QueryFilter:               nil,
-		ReturnConsumedCapacity:    "",
-		ScanIndexForward:          new(bool),
-		Select:                    "",
+		TableName:                new(consts.DynamoDBTableName),
+		AttributesToGet:          nil,
+		ConditionalOperator:      types.ConditionalOperatorAnd,
+		KeyConditionExpression:   new("PK = :pk AND begin_with(SK, :skPrefix)"),
+		ExpressionAttributeNames: nil,
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":pk":       &types.AttributeValueMemberS{Value: "USER#" + userID},
+			":skPrefix": &types.AttributeValueMemberS{Value: "ROOM"},
+		},
+		ConsistentRead:         new(false),
+		ExclusiveStartKey:      nil,
+		FilterExpression:       nil,
+		IndexName:              nil,
+		KeyConditions:          nil,
+		Limit:                  nil,
+		ProjectionExpression:   nil,
+		QueryFilter:            nil,
+		ReturnConsumedCapacity: types.ReturnConsumedCapacityNone,
+		ScanIndexForward:       new(true),
+		Select:                 types.SelectAllAttributes,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to query: %w", err)
 	}
+
+	var joinedRooms = []JoinedRoom{}
+
+	err = attributevalue.UnmarshalListOfMaps(result.Items, &joinedRooms)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal dynamodb result items: %w", err)
+	}
+
 	panic("")
 }
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/sudame/chat/internal/read_api/graph"
+	"github.com/sudame/chat/internal/read_api/middleware"
 	"github.com/sudame/chat/internal/read_api/resolver"
 	"github.com/sudame/chat/pkg/env"
 )
@@ -49,7 +51,7 @@ func main() {
 	srv.Use(extension.Introspection{})
 
 	http.Handle("/", playground.Handler("GraphQL Playground", "/query"))
-	http.Handle("/query", srv)
+	http.Handle("/query", middleware.AuthMiddleware(srv))
 
 	log.Printf("GraphQL playground: http://localhost:%s/", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
