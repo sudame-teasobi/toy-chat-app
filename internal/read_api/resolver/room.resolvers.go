@@ -9,37 +9,73 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/sudame/chat/internal/consts"
 	"github.com/sudame/chat/internal/read_api/graph"
+	"github.com/sudame/chat/internal/read_api/middleware"
 	"github.com/sudame/chat/internal/read_api/model"
 )
 
 // Rooms is the resolver for the rooms field.
 func (r *queryResolver) Rooms(ctx context.Context, first *int32, after *string, last *int32, before *string) (*model.RoomConnection, error) {
-	result, err := r.DynamoDBClient.Query(ctx, &dynamodb.QueryInput{
-		TableName:                 new(consts.DynamoDBUserTableName),
-		AttributesToGet:           nil,
-		ConditionalOperator:       "",
-		ConsistentRead:            new(false),
-		ExclusiveStartKey:         nil,
-		ExpressionAttributeNames:  nil,
-		ExpressionAttributeValues: nil,
-		FilterExpression:          nil,
-		IndexName:                 nil,
-		KeyConditionExpression:    nil,
-		KeyConditions:             nil,
-		Limit:                     nil,
-		ProjectionExpression:      nil,
-		QueryFilter:               nil,
-		ReturnConsumedCapacity:    "",
-		ScanIndexForward:          new(bool),
-		Select:                    "",
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to query: %w", err)
+	// first と before が同時に指定されている
+	if first != nil && before != nil {
+		return nil, fmt.Errorf("invalid input: first and before")
 	}
-	panic("")
+	// last と after が同時に指定されている
+	if last != nil && after != nil {
+		return nil, fmt.Errorf("invalid input: last and after")
+	}
+
+	// first と last が同時に指定されている
+	if first != nil && last != nil {
+		return nil, fmt.Errorf("invalid input: first and last")
+	}
+
+	type cursorKey struct {
+		PK string `dynamodbav:"PK"`
+		SK string `dynamodbav:"SK"`
+	}
+
+	userID, err := middleware.GetUserID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user ID: %w", err)
+	}
+
+	params := QueryParams{
+		PK:     "USER#" + userID,
+		First:  first,
+		After:  after,
+		Last:   last,
+		Before: before,
+	}
+
+	var con *Connection[JoinedRoom]
+
+	if first != nil {
+		p := params.ToQueryForwardParams()
+		con, err = QueryForward[JoinedRoom](ctx, r.DynamoDBClient, consts.DynamoDBTableName, p)
+	} else {
+		p := params.ToQueryBackwardParams()
+		con, err = QueryBackward[JoinedRoom](ctx, r.DynamoDBClient, consts.DynamoDBTableName, p)
+	}
+
+	edges := make([]*model.RoomEdge, len(con.Items))
+	for i, item := range con.Items {
+		edge := model.RoomEdge{
+			Node: &model.Room{
+				ID: item.Node.RoomID,
+			},
+			Cursor: item.Cursor,
+		}
+		edges[i] = &edge
+	}
+
+	roomConnection := model.RoomConnection{
+		Edges:    edges,
+		PageInfo: con.PageInfo,
+	}
+
+	return &roomConnection, nil
 }
 
 // TotalCount is the resolver for the totalCount field.

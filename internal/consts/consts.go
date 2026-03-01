@@ -1,3 +1,3 @@
 package consts
 
-const DynamoDBUserTableName = "user"
+const DynamoDBTableName = "ToyChatApp"

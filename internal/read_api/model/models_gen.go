@@ -39,9 +39,13 @@ type Query struct {
 }
 
 type Room struct {
+	ID      string                `json:"id"`
 	Name    string                `json:"name"`
 	Members *RoomMemberConnection `json:"members"`
 }
+
+func (Room) IsNode()            {}
+func (this Room) GetID() string { return this.ID }
 
 type RoomEdge struct {
 	Node   *Room  `json:"node"`

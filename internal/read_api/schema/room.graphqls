@@ -1,4 +1,5 @@
-type Room {
+type Room implements Node{
+  id: ID!
   name: String!
   members(first: Int, after: String, last: Int, before: String): RoomMemberConnection!
 }
