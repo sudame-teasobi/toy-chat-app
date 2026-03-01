@@ -33,46 +33,44 @@ func createTableIfNotExist(ctx context.Context, client *dynamodb.Client, input *
 
 func initializeTables(ctx context.Context, client *dynamodb.Client) error {
 	_, _, err := createTableIfNotExist(ctx, client, &dynamodb.CreateTableInput{
-		TableName: new("Users"),
+		TableName: new("ToyChatApp"),
 		KeySchema: []types.KeySchemaElement{
-			{AttributeName: new("id"), KeyType: types.KeyTypeHash},
+			{
+				AttributeName: new("PK"),
+				KeyType:       types.KeyTypeHash,
+			},
+			{
+				AttributeName: new("SK"),
+				KeyType:       types.KeyTypeRange,
+			},
 		},
 		AttributeDefinitions: []types.AttributeDefinition{
-			{AttributeName: new("id"), AttributeType: types.ScalarAttributeTypeS},
+			{
+				AttributeName: new("PK"),
+				AttributeType: types.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: new("SK"),
+				AttributeType: types.ScalarAttributeTypeS,
+			},
 		},
-		BillingMode: types.BillingModePayPerRequest,
+		BillingMode:                        types.BillingModePayPerRequest,
+		GlobalTableSettingsReplicationMode: types.GlobalTableSettingsReplicationModeDisabled,
+		TableClass:                         types.TableClassStandard,
+		DeletionProtectionEnabled:          new(false),
+		GlobalSecondaryIndexes:             nil,
+		GlobalTableSourceArn:               nil,
+		LocalSecondaryIndexes:              nil,
+		OnDemandThroughput:                 nil,
+		ProvisionedThroughput:              nil,
+		ResourcePolicy:                     nil,
+		SSESpecification:                   nil,
+		StreamSpecification:                nil,
+		Tags:                               nil,
+		WarmThroughput:                     nil,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create users table: %w", err)
+		return fmt.Errorf("failed to create table: %w", err)
 	}
-
-	_, _, err = createTableIfNotExist(ctx, client, &dynamodb.CreateTableInput{
-		TableName: new("Rooms"),
-		KeySchema: []types.KeySchemaElement{
-			{AttributeName: new("id"), KeyType: types.KeyTypeHash},
-		},
-		AttributeDefinitions: []types.AttributeDefinition{
-			{AttributeName: new("id"), AttributeType: types.ScalarAttributeTypeS},
-		},
-		BillingMode: types.BillingModePayPerRequest,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create rooms table: %w", err)
-	}
-
-	_, _, err = createTableIfNotExist(ctx, client, &dynamodb.CreateTableInput{
-		TableName: new("Memberships"),
-		KeySchema: []types.KeySchemaElement{
-			{AttributeName: new("id"), KeyType: types.KeyTypeHash},
-		},
-		AttributeDefinitions: []types.AttributeDefinition{
-			{AttributeName: new("id"), AttributeType: types.ScalarAttributeTypeS},
-		},
-		BillingMode: types.BillingModePayPerRequest,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create members table: %w", err)
-	}
-
 	return nil
 }
