@@ -1,4 +1,5 @@
 [tools]
+"go:github.com/99designs/gqlgen" = "latest"
 "go:github.com/golangci/golangci-lint/v2/cmd/golangci-lint" = "latest"
 "go:github.com/nametake/golangci-lint-langserver" = "latest"
 "go:golang.org/x/tools/gopls" = "latest"
