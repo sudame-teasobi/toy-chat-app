@@ -127,18 +127,6 @@ services:
   ##########################################
   # Webアプリケーション: 80xx番台のポートを使用
   ##########################################
-  # read-server:
-  #   build:
-  #     context: .
-  #     dockerfile: ./read-server/Dockerfile
-  #   ports:
-  #     - '8080:8080'
-  #   depends_on:
-  #     - kafka
-  #   command: ["deno", "task", "start:read-server"]
-  #   environment:
-  #     KAFKA_BROKER: kafka:29092
-  #
   write-server:
     build:
       context: .
@@ -192,6 +180,19 @@ services:
       KAFKA_TOPIC: event-records-changefeed
       KAFKA_GROUP_ID: read-consumer-group
       DYNAMODB_URL: "http://dynamodb:8000"
+  read_api:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/read-api.dockerfile
+    pull_policy: build
+    ports:
+      - 8080:8080
+    depends_on:
+      read:
+        condition: service_started
+    environment:
+      DYNAMODB_URL: "http://dynamodb:8000"
+  
 
   ##########################################
   # 開発用ツール: 81xx番台のポートを使用
