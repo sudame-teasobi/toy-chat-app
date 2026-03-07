@@ -55,7 +55,7 @@ func (r *queryResolver) Rooms(ctx context.Context, first *int32, after *string, 
 		p := params.ToQueryForwardParams()
 		con, err = QueryForward[JoinedRoom](ctx, r.DynamoDBClient, consts.DynamoDBTableName, p)
 		if err != nil {
-			return nil, fmt.Errorf("failed to query foward: %w", err)
+			return nil, fmt.Errorf("failed to query forward: %w", err)
 		}
 	} else {
 		p := params.ToQueryBackwardParams()
