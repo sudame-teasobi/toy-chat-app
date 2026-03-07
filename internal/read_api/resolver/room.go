@@ -124,7 +124,7 @@ func QueryForward[Node any](ctx context.Context, client *dynamodb.Client, tableN
 		rawItems = rawItems[:first]
 	}
 
-	cursors := make([]Cursor, len(result.Items))
+	cursors := make([]Cursor, len(rawItems))
 	for i, item := range rawItems {
 		var cursor Cursor
 		if err := attributevalue.UnmarshalMap(item, &cursor); err != nil {
