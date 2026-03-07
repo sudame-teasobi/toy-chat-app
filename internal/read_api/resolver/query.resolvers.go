@@ -10,11 +10,12 @@ import (
 	"fmt"
 
 	"github.com/sudame/chat/internal/read_api/graph"
+	"github.com/sudame/chat/internal/read_api/model"
 )
 
-// Test is the resolver for the test field.
-func (r *queryResolver) Test(ctx context.Context) (string, error) {
-	panic(fmt.Errorf("not implemented: Test - test"))
+// Node is the resolver for the node field.
+func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error) {
+	panic(fmt.Errorf("not implemented: Node - node"))
 }
 
 // Query returns graph.QueryResolver implementation.

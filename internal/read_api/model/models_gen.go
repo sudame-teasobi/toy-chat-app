@@ -2,5 +2,71 @@
 
 package model
 
+import (
+	"time"
+)
+
+type Node interface {
+	IsNode()
+	GetID() string
+}
+
+type Message struct {
+	Author   string    `json:"author"`
+	Body     string    `json:"body"`
+	PostedAt time.Time `json:"postedAt"`
+}
+
+type MessageConnection struct {
+	Edges      []*MessageEdge `json:"edges"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
+	TotalCount *int32         `json:"totalCount,omitempty"`
+}
+
+type MessageEdge struct {
+	Node   *Message `json:"node"`
+	Cursor string   `json:"cursor"`
+}
+
+type PageInfo struct {
+	HasNextPage     bool    `json:"hasNextPage"`
+	HasPreviousPage bool    `json:"hasPreviousPage"`
+	StartCursor     *string `json:"startCursor,omitempty"`
+	EndCursor       *string `json:"endCursor,omitempty"`
+}
+
 type Query struct {
+}
+
+type Room struct {
+	ID      string                `json:"id"`
+	Name    string                `json:"name"`
+	Members *RoomMemberConnection `json:"members"`
+}
+
+func (Room) IsNode()            {}
+func (this Room) GetID() string { return this.ID }
+
+type RoomEdge struct {
+	Node   *Room  `json:"node"`
+	Cursor string `json:"cursor"`
+}
+
+type RoomMember struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+func (RoomMember) IsNode()            {}
+func (this RoomMember) GetID() string { return this.ID }
+
+type RoomMemberConnection struct {
+	Edges      []*RoomMemberEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount *int32            `json:"totalCount,omitempty"`
+}
+
+type RoomMemberEdge struct {
+	Node   *RoomMember `json:"node"`
+	Cursor string      `json:"cursor"`
 }
