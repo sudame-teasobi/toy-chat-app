@@ -67,6 +67,9 @@ func (r *queryResolver) Rooms(ctx context.Context, first *int32, after *string, 
 
 	edges := make([]*model.RoomEdge, len(con.Items))
 	for i, item := range con.Items {
+		if item == nil || item.Node == nil {
+			continue
+		}
 		edge := model.RoomEdge{
 			Node: &model.Room{
 				ID:   item.Node.RoomID,
