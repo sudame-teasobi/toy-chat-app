@@ -31,6 +31,11 @@ func (r *queryResolver) Rooms(ctx context.Context, first *int32, after *string, 
 		return nil, fmt.Errorf("invalid input: first and last")
 	}
 
+	// first も last も指定されていない
+	if first == nil && last == nil {
+		return nil, fmt.Errorf("invalid input: no first and no last")
+	}
+
 	userID, err := middleware.GetUserID(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user ID: %w", err)
