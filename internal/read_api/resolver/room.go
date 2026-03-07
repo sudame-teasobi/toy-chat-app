@@ -109,6 +109,16 @@ func QueryForward[Node any](ctx context.Context, client *dynamodb.Client, tableN
 
 	rawItems := slices.Clone(result.Items)
 
+	if len(rawItems) == 0 {
+		return &Connection[Node]{
+			Items: make([]*Edge[Node], 0),
+			PageInfo: &model.PageInfo{
+				HasNextPage:     false,
+				HasPreviousPage: false,
+			},
+		}, nil
+	}
+
 	cursors := make([]Cursor, len(result.Items))
 	for i, item := range rawItems {
 		var cursor Cursor
@@ -206,6 +216,16 @@ func QueryBackward[Node any](ctx context.Context, client *dynamodb.Client, table
 
 	rawItems := slices.Clone(result.Items)
 	slices.Reverse(rawItems)
+
+	if len(rawItems) == 0 {
+		return &Connection[Node]{
+			Items: make([]*Edge[Node], 0),
+			PageInfo: &model.PageInfo{
+				HasNextPage:     false,
+				HasPreviousPage: false,
+			},
+		}, nil
+	}
 
 	cursors := make([]Cursor, len(rawItems))
 	for i, item := range rawItems {
