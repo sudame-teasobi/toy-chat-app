@@ -50,15 +50,13 @@ func EncodeCursor(cursor Cursor) (*string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal cursor to json: %w", err)
 	}
-	var b []byte
-	base64.StdEncoding.Encode(b, j)
+	b := base64.StdEncoding.EncodeToString(j)
 
-	return new(string(b)), nil
+	return new(b), nil
 }
 
 func DecodeCursor(encodedCursor string) (map[string]types.AttributeValue, error) {
-	var j []byte
-	_, err := base64.StdEncoding.Decode(j, []byte(encodedCursor))
+	j, err := base64.StdEncoding.DecodeString(encodedCursor)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode base64: %w", err)
 	}
@@ -149,6 +147,7 @@ func QueryForward[Node any](ctx context.Context, client *dynamodb.Client, tableN
 		cursor, err := EncodeCursor(cursors[i])
 		if err != nil {
 			slog.ErrorContext(ctx, "failed to encode cursor", "item", item, "cursor", cursors[i], "err", err)
+			continue
 		}
 
 		edge := Edge[Node]{
@@ -246,6 +245,7 @@ func QueryBackward[Node any](ctx context.Context, client *dynamodb.Client, table
 		cursor, err := EncodeCursor(cursors[i])
 		if err != nil {
 			slog.ErrorContext(ctx, "failed to encode cursor", "item", item, "cursor", cursors[i], "err", err)
+			continue
 		}
 
 		edge := Edge[Node]{
