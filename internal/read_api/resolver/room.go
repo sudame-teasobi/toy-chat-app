@@ -119,6 +119,11 @@ func QueryForward[Node any](ctx context.Context, client *dynamodb.Client, tableN
 		}, nil
 	}
 
+	hasNextPage := len(rawItems) > int(first)
+	if hasNextPage {
+		rawItems = rawItems[:first]
+	}
+
 	cursors := make([]Cursor, len(result.Items))
 	for i, item := range rawItems {
 		var cursor Cursor
@@ -140,7 +145,7 @@ func QueryForward[Node any](ctx context.Context, client *dynamodb.Client, tableN
 
 	pageInfo := model.PageInfo{
 		HasPreviousPage: params.After != nil,
-		HasNextPage:     len(rawItems) > int(first),
+		HasNextPage:     hasNextPage,
 		StartCursor:     startCursor,
 		EndCursor:       endCursor,
 	}
@@ -227,6 +232,11 @@ func QueryBackward[Node any](ctx context.Context, client *dynamodb.Client, table
 		}, nil
 	}
 
+	hasPreviousPage := len(rawItems) > int(last)
+	if hasPreviousPage {
+		rawItems = rawItems[1:]
+	}
+
 	cursors := make([]Cursor, len(rawItems))
 	for i, item := range rawItems {
 		var cursor Cursor
@@ -247,7 +257,7 @@ func QueryBackward[Node any](ctx context.Context, client *dynamodb.Client, table
 	}
 
 	pageInfo := model.PageInfo{
-		HasPreviousPage: len(rawItems) > int(last),
+		HasPreviousPage: hasPreviousPage,
 		HasNextPage:     params.Before != nil,
 		StartCursor:     startCursor,
 		EndCursor:       endCursor,

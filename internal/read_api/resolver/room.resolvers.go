@@ -64,7 +64,8 @@ func (r *queryResolver) Rooms(ctx context.Context, first *int32, after *string, 
 	for i, item := range con.Items {
 		edge := model.RoomEdge{
 			Node: &model.Room{
-				ID: item.Node.RoomID,
+				ID:   item.Node.RoomID,
+				Name: "Not Implemented", // TODO: implement this
 			},
 			Cursor: item.Cursor,
 		}
