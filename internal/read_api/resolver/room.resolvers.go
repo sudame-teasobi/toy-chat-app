@@ -31,11 +31,6 @@ func (r *queryResolver) Rooms(ctx context.Context, first *int32, after *string, 
 		return nil, fmt.Errorf("invalid input: first and last")
 	}
 
-	type cursorKey struct {
-		PK string `dynamodbav:"PK"`
-		SK string `dynamodbav:"SK"`
-	}
-
 	userID, err := middleware.GetUserID(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user ID: %w", err)
@@ -54,9 +49,15 @@ func (r *queryResolver) Rooms(ctx context.Context, first *int32, after *string, 
 	if first != nil {
 		p := params.ToQueryForwardParams()
 		con, err = QueryForward[JoinedRoom](ctx, r.DynamoDBClient, consts.DynamoDBTableName, p)
+		if err != nil {
+			return nil, fmt.Errorf("failed to query foward: %w", err)
+		}
 	} else {
 		p := params.ToQueryBackwardParams()
 		con, err = QueryBackward[JoinedRoom](ctx, r.DynamoDBClient, consts.DynamoDBTableName, p)
+		if err != nil {
+			return nil, fmt.Errorf("failed to query backward: %w", err)
+		}
 	}
 
 	edges := make([]*model.RoomEdge, len(con.Items))
