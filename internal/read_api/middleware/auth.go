@@ -27,7 +27,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userID := r.Header.Get("x-user-id")
 		if userID == "" {
-			panic("failed to extract user id from header")
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
 		}
 
 		ctx := SetUserID(r.Context(), userID)
