@@ -28,11 +28,12 @@ type Cursor struct {
 }
 
 type QueryParams struct {
-	PK     string
-	First  *int32
-	After  *string
-	Last   *int32
-	Before *string
+	PK       string
+	SKPrefix *string
+	First    *int32
+	After    *string
+	Last     *int32
+	Before   *string
 }
 
 type Edge[Node any] struct {
@@ -70,28 +71,37 @@ func DecodeCursor(encodedCursor string) (map[string]types.AttributeValue, error)
 }
 
 type QueryForwardParams struct {
-	PK    string
-	First *int32
-	After *string
+	PK       string
+	SKPrefix *string
+	First    *int32
+	After    *string
 }
 
 func (p QueryParams) ToQueryForwardParams() QueryForwardParams {
 	return QueryForwardParams{
-		PK:    p.PK,
-		First: p.First,
-		After: p.After,
+		PK:       p.PK,
+		SKPrefix: p.SKPrefix,
+		First:    p.First,
+		After:    p.After,
 	}
 }
 
 func QueryForward[Node any](ctx context.Context, client *dynamodb.Client, tableName string, params QueryForwardParams) (*Connection[Node], error) {
 	first := *params.First
+	var skPrefix string
+	if params.SKPrefix != nil {
+		skPrefix = *params.SKPrefix
+	}
 
 	input := &dynamodb.QueryInput{
-		TableName:                 new(tableName),
-		KeyConditionExpression:    new("PK = :pk"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{":pk": &types.AttributeValueMemberS{Value: params.PK}},
-		Limit:                     new(first + 1),
-		ScanIndexForward:          new(true),
+		TableName:              new(tableName),
+		KeyConditionExpression: new("PK = :pk AND begins_with(SK, :sk_prefix)"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":pk":        &types.AttributeValueMemberS{Value: params.PK},
+			":sk_prefix": &types.AttributeValueMemberS{Value: skPrefix},
+		},
+		Limit:            new(first + 1),
+		ScanIndexForward: new(true),
 	}
 
 	if params.After != nil {
@@ -182,28 +192,37 @@ func QueryForward[Node any](ctx context.Context, client *dynamodb.Client, tableN
 }
 
 type QueryBackwardParams struct {
-	PK     string
-	Last   *int32
-	Before *string
+	PK       string
+	SKPrefix *string
+	Last     *int32
+	Before   *string
 }
 
 func (p QueryParams) ToQueryBackwardParams() QueryBackwardParams {
 	return QueryBackwardParams{
-		PK:     p.PK,
-		Last:   p.Last,
-		Before: p.Before,
+		PK:       p.PK,
+		SKPrefix: p.SKPrefix,
+		Last:     p.Last,
+		Before:   p.Before,
 	}
 }
 
 func QueryBackward[Node any](ctx context.Context, client *dynamodb.Client, tableName string, params QueryBackwardParams) (*Connection[Node], error) {
 	last := *params.Last
+	var skPrefix string
+	if params.SKPrefix != nil {
+		skPrefix = *params.SKPrefix
+	}
 
 	input := &dynamodb.QueryInput{
-		TableName:                 new(tableName),
-		KeyConditionExpression:    new("PK = :pk"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{":pk": &types.AttributeValueMemberS{Value: params.PK}},
-		Limit:                     new(last + 1),
-		ScanIndexForward:          new(false),
+		TableName:              new(tableName),
+		KeyConditionExpression: new("PK = :pk AND begins_with(SK, :sk_prefix)"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":pk":        &types.AttributeValueMemberS{Value: params.PK},
+			":sk_prefix": &types.AttributeValueMemberS{Value: skPrefix},
+		},
+		Limit:            new(last + 1),
+		ScanIndexForward: new(false),
 	}
 
 	if params.Before != nil {
