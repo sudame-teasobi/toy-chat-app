@@ -44,6 +44,25 @@ func (r *MembershipRepository) FindById(ctx context.Context, id string) (*member
 	return &ms, nil
 }
 
+// FindByUserIDAndRoomID implements [membership.Repository].
+func (r *MembershipRepository) FindByUserIDAndRoomID(ctx context.Context, userID string, roomID string) (*membership.Membership, error) {
+	row, err := r.queries.GetMemberByChatRoomAndUser(ctx, db.GetMemberByChatRoomAndUserParams{ChatRoomID: roomID, UserID: userID})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, membership.ErrNotFound
+		}
+		return nil, err
+	}
+
+	ms := membership.Membership{
+		Id:         row.ID,
+		ChatRoomId: row.ChatRoomID,
+		UserId:     row.UserID,
+	}
+
+	return &ms, nil
+}
+
 // Save implements [membership.Repository].
 func (r *MembershipRepository) Save(ctx context.Context, m *membership.Membership) error {
 	tx, err := r.db.BeginTx(ctx, nil)

@@ -19,8 +19,9 @@ func (m *mockRoomQuery) CheckRoomExistence(req room.CheckRoomExistenceRequest) (
 }
 
 type mockMembershipRepository struct {
-	saveFunc    func(ctx context.Context, m *membership.Membership) error
-	findByIdFunc func(ctx context.Context, id string) (*membership.Membership, error)
+	saveFunc                  func(ctx context.Context, m *membership.Membership) error
+	findByIdFunc              func(ctx context.Context, id string) (*membership.Membership, error)
+	findByUserIDAndRoomIdFunc func(ctx context.Context, userID string, roomID string) (*membership.Membership, error)
 }
 
 func (m *mockMembershipRepository) Save(ctx context.Context, ms *membership.Membership) error {
@@ -29,6 +30,10 @@ func (m *mockMembershipRepository) Save(ctx context.Context, ms *membership.Memb
 
 func (m *mockMembershipRepository) FindById(ctx context.Context, id string) (*membership.Membership, error) {
 	return m.findByIdFunc(ctx, id)
+}
+
+func (m *mockMembershipRepository) FindByUserIDAndRoomID(ctx context.Context, userID string, roomID string) (*membership.Membership, error) {
+	return m.findByUserIDAndRoomIdFunc(ctx, userID, roomID)
 }
 
 func TestCreateMembershipService_Exec(t *testing.T) {
