@@ -42,11 +42,12 @@ func (r *queryResolver) Rooms(ctx context.Context, first *int32, after *string, 
 	}
 
 	params := QueryParams{
-		PK:     "USER#" + userID,
-		First:  first,
-		After:  after,
-		Last:   last,
-		Before: before,
+		PK:       "USER#" + userID,
+		SKPrefix: new("ROOM#"),
+		First:    first,
+		After:    after,
+		Last:     last,
+		Before:   before,
 	}
 
 	var con *Connection[JoinedRoom]

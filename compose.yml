@@ -131,6 +131,7 @@ services:
     build:
       context: .
       dockerfile: ./dockerfiles/write-server.dockerfile
+    pull_policy: build
     ports:
       - "8081:8081"
     depends_on:
@@ -150,6 +151,7 @@ services:
     build:
       context: .
       dockerfile: ./dockerfiles/membership.dockerfile
+    pull_policy: build
     depends_on:
       tidb-tidb:
         condition: service_started
@@ -170,6 +172,7 @@ services:
     build:
       context: .
       dockerfile: ./dockerfiles/read.dockerfile
+    pull_policy: build
     depends_on:
       dynamodb:
         condition: service_started
@@ -192,6 +195,7 @@ services:
         condition: service_started
     environment:
       DYNAMODB_URL: "http://dynamodb:8000"
+      SERVER_PORT: 8080
   
 
   ##########################################
