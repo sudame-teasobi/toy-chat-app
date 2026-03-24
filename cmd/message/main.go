@@ -55,8 +55,8 @@ func main() {
 
 	membershipQuery := query.NewMembershipQuery(httpClient)
 
-	service := service.NewPostMessageService(ctx, membershipQuery, messageRepo)
-	handler := handler.NewPostMessageHandler(service)
+	postMessageService := service.NewPostMessageService(ctx, membershipQuery, messageRepo)
+	postMessageHandler := handler.NewPostMessageHandler(postMessageService)
 
 	e := echo.New()
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
@@ -77,7 +77,7 @@ func main() {
 	}))
 	e.Use(middleware.Recover())
 
-	e.POST("/post-message", handler.Handle)
+	e.POST("/post-message", postMessageHandler.Handle)
 
 	log.Printf("Starting server on port %s", serverPort)
 	if err := e.Start(":" + serverPort); err != nil {
