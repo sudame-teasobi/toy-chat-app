@@ -2,20 +2,18 @@
 
 package model
 
-import (
-	"time"
-)
-
 type Node interface {
 	IsNode()
 	GetID() string
 }
 
 type Message struct {
-	Author   string    `json:"author"`
-	Body     string    `json:"body"`
-	PostedAt time.Time `json:"postedAt"`
+	ID   string `json:"id"`
+	Body string `json:"body"`
 }
+
+func (Message) IsNode()            {}
+func (this Message) GetID() string { return this.ID }
 
 type MessageConnection struct {
 	Edges      []*MessageEdge `json:"edges"`
@@ -37,15 +35,6 @@ type PageInfo struct {
 
 type Query struct {
 }
-
-type Room struct {
-	ID      string                `json:"id"`
-	Name    string                `json:"name"`
-	Members *RoomMemberConnection `json:"members"`
-}
-
-func (Room) IsNode()            {}
-func (this Room) GetID() string { return this.ID }
 
 type RoomEdge struct {
 	Node   *Room  `json:"node"`
@@ -70,3 +59,11 @@ type RoomMemberEdge struct {
 	Node   *RoomMember `json:"node"`
 	Cursor string      `json:"cursor"`
 }
+
+type User struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+func (User) IsNode()            {}
+func (this User) GetID() string { return this.ID }
