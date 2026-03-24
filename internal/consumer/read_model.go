@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/sudame/chat/internal/domain/membership"
+	"github.com/sudame/chat/internal/domain/message"
 	"github.com/sudame/chat/internal/domain/room"
 	"github.com/sudame/chat/internal/domain/user"
 	"github.com/sudame/chat/internal/ticdc"
@@ -63,6 +64,15 @@ type Membership struct {
 	MembershipID string `dynamodbav:"membership_id"`
 	RoomID       string `dynamodbav:"room_id"`
 	UserID       string `dynamodbav:"user_id"`
+}
+
+type Message struct {
+	PK        string `dynamodbav:"PK"` // ROOM#<id>
+	SK        string `dynamodbav:"SK"` // MESSAGE#<id>
+	MessageID string `dynamodbav:"message_id"`
+	Body      string `dynamodbav:"body"`
+	RoomID    string `dynamodbav:"room_id"`
+	UserID    string `dynamodbav:"user_Id"`
 }
 
 var tableName = "ToyChatApp"
@@ -172,6 +182,46 @@ func handleMembershipCreatedEvent(ctx context.Context, client *dynamodb.Client, 
 	return nil
 }
 
+func handleMessagePostedEvent(ctx context.Context, client *dynamodb.Client, event message.MessagePostedEvent) error {
+	message := Message{
+		PK:        "ROOM#" + event.ChatRoomID,
+		SK:        "MESSAGE#" + event.ID,
+		MessageID: event.ID,
+		RoomID:    event.ChatRoomID,
+		UserID:    event.AuthorUserID,
+	}
+	messageAv, err := attributevalue.MarshalMap(message)
+	if err != nil {
+		return fmt.Errorf("failed to marshal joined room: %w", err)
+	}
+
+	_, err = client.TransactWriteItems(ctx, &dynamodb.TransactWriteItemsInput{
+		TransactItems: []types.TransactWriteItem{
+			{
+				Put: &types.Put{
+					Item:                                messageAv,
+					TableName:                           &tableName,
+					ConditionExpression:                 nil,
+					ExpressionAttributeNames:            nil,
+					ExpressionAttributeValues:           nil,
+					ReturnValuesOnConditionCheckFailure: types.ReturnValuesOnConditionCheckFailureNone,
+				},
+				ConditionCheck: nil,
+				Delete:         nil,
+				Update:         nil,
+			},
+		},
+		ClientRequestToken:          nil,
+		ReturnConsumedCapacity:      types.ReturnConsumedCapacityNone,
+		ReturnItemCollectionMetrics: types.ReturnItemCollectionMetricsNone,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to transact write items: %w", err)
+	}
+
+	return nil
+}
+
 // TODO: kafka は at-least-once な保証スタイルなので、重複したイベントが飛んできたときの処理を検討すべき
 // Consume はコンシュームする
 func (c *ReadModelConsumer) Consume(ctx context.Context, event ticdc.Event) error {
@@ -213,6 +263,16 @@ func (c *ReadModelConsumer) Consume(ctx context.Context, event ticdc.Event) erro
 				return fmt.Errorf("failed to handle membership created event: %w", err)
 			}
 			slog.DebugContext(ctx, "membership created", "domain_data", devent)
+		case message.MessagePostedEventType:
+			devent, err := extractEventData[message.MessagePostedEvent](eb)
+			if err != nil {
+				return fmt.Errorf("failed to extract domain event: %w", err)
+			}
+			err = handleMessagePostedEvent(ctx, c.client, devent)
+			if err != nil {
+				return fmt.Errorf("failed to handle message posted event: %w", err)
+			}
+			slog.DebugContext(ctx, "message posted", "domain_data", devent)
 		default:
 			return fmt.Errorf("failed to handle event, unknown event type: event_type = %s", data.Type)
 		}
