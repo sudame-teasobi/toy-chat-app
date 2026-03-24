@@ -70,19 +70,19 @@ func (r *roomResolver) Messages(ctx context.Context, obj *model.Room, first *int
 		}
 	}
 
-	edges := make([]*model.MessageEdge, len(con.Items))
-	for i, item := range con.Items {
+	var edges = []*model.MessageEdge{}
+	for _, item := range con.Items {
 		if item == nil || item.Node == nil {
 			continue
 		}
 		edge := model.MessageEdge{
 			Node: &model.Message{
-				ID:   item.Node.RoomID,
+				ID:   item.Node.MessageID,
 				Body: item.Node.Body,
 			},
 			Cursor: item.Cursor,
 		}
-		edges[i] = &edge
+		edges = append(edges, &edge)
 	}
 
 	messageConnection := model.MessageConnection{
