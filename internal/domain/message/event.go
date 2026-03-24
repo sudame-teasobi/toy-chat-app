@@ -6,7 +6,7 @@ import (
 	"github.com/sudame/chat/internal/events"
 )
 
-const MessagePostedEventType string = "messsage.posted"
+const MessagePostedEventType string = "message.posted"
 
 type MessagePostedEvent struct {
 	ID           string `json:"id"`
