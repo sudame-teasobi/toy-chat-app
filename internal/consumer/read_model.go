@@ -198,7 +198,7 @@ func handleMessagePostedEvent(ctx context.Context, client *dynamodb.Client, even
 
 	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{Item: messageAv, TableName: &tableName})
 	if err != nil {
-		return fmt.Errorf("failed to transact write items: %w", err)
+		return fmt.Errorf("failed to put item: %w", err)
 	}
 
 	return nil
