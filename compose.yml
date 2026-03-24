@@ -158,6 +158,7 @@ services:
       kafka:
         condition: service_healthy
     environment:
+      SERVER_PORT: 8080
       DB_HOST: tidb-tidb
       DB_PORT: 4000
       DB_USER: root
@@ -167,6 +168,25 @@ services:
       KAFKA_TOPIC: event-records-changefeed
       KAFKA_GROUP_ID: membership-consumer-group
       ROOM_SERVER: "http://write-server:8081"
+
+  message:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/message.dockerfile
+    pull_policy: build
+    depends_on:
+      tidb-tidb:
+        condition: service_started
+    ports:
+      - 8083:8080
+    environment:
+      SERVER_PORT: 8080
+      DB_HOST: tidb-tidb
+      DB_PORT: 4000
+      DB_USER: root
+      DB_PASSWORD: ""
+      DB_NAME: toy_chat_app
+      MEMBERSHIP_SERVER: "http://membership:8080"
 
   read:
     build:
@@ -183,6 +203,7 @@ services:
       KAFKA_TOPIC: event-records-changefeed
       KAFKA_GROUP_ID: read-consumer-group
       DYNAMODB_URL: "http://dynamodb:8000"
+
   read_api:
     build:
       context: .

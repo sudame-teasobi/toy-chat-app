@@ -8,10 +8,14 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
+	"os"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/segmentio/kafka-go"
 	"github.com/sudame/chat/internal/consumer"
+	"github.com/sudame/chat/internal/handler"
 	"github.com/sudame/chat/internal/infrastructure/query"
 	"github.com/sudame/chat/internal/infrastructure/repository"
 	"github.com/sudame/chat/internal/service"
@@ -21,7 +25,12 @@ import (
 )
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	slog.SetDefault(logger)
+
 	ctx := context.Background()
+
+	serverPort := env.GetEnv("SERVER_PORT").Value()
 
 	kafkaBroker := env.GetEnv("KAFKA_BROKER").WithDefault("localhost:9092").Value()
 	kafkaGroupID := env.GetEnv("KAFKA_GROUP_ID").Value()
@@ -62,6 +71,37 @@ func main() {
 	createMembershipService := service.NewCreateMembershipService(userRepo, roomQuery, membershipRepo)
 
 	membershipConsumer := consumer.NewMembershipConsumer(createMembershipService)
+
+	checkMembershipExistenceService := service.NewCheckMembershipExistenceService(membershipRepo)
+	checkMembershipExistenceHandler := handler.NewCheckMembershipExistenceHandler(checkMembershipExistenceService)
+
+	e := echo.New()
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogStatus:   true,
+		LogURI:      true,
+		LogMethod:   true,
+		LogLatency:  true,
+		LogError:    true,
+		HandleError: true,
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			if v.Error != nil {
+				log.Printf("%s %s %d %v - error: %v", v.Method, v.URI, v.Status, v.Latency, v.Error)
+			} else {
+				log.Printf("%s %s %d %v", v.Method, v.URI, v.Status, v.Latency)
+			}
+			return nil
+		},
+	}))
+	e.Use(middleware.Recover())
+
+	e.POST(query.CheckMembershipExistencePath, checkMembershipExistenceHandler.Handle)
+
+	go func() {
+		log.Printf("Starting server on port %s", serverPort)
+		if err := e.Start(":" + serverPort); err != nil {
+			log.Fatalf("Failed to start server: %v", err)
+		}
+	}()
 
 	reader := kafka.NewReader(
 		kafka.ReaderConfig{

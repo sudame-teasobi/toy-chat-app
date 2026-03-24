@@ -17,8 +17,10 @@ type Querier interface {
 	GetMember(ctx context.Context, id string) (ChatRoomMember, error)
 	GetMemberByChatRoomAndUser(ctx context.Context, arg GetMemberByChatRoomAndUserParams) (ChatRoomMember, error)
 	GetMembersByChatRoomID(ctx context.Context, chatRoomID string) ([]ChatRoomMember, error)
+	GetMessage(ctx context.Context, id string) (Message, error)
 	GetUser(ctx context.Context, id string) (User, error)
 	InsertEvent(ctx context.Context, arg InsertEventParams) (sql.Result, error)
+	PostMessage(ctx context.Context, arg PostMessageParams) (sql.Result, error)
 }
 
 var _ Querier = (*Queries)(nil)

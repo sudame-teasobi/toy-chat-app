@@ -40,6 +40,11 @@ type mockMembershipRepo struct {
 	findByIdFunc func(ctx context.Context, id string) (*membership.Membership, error)
 }
 
+// FindByUserIDAndRoomID implements [membership.Repository].
+func (m *mockMembershipRepo) FindByUserIDAndRoomID(ctx context.Context, userID string, roomID string) (*membership.Membership, error) {
+	panic("unimplemented")
+}
+
 func (m *mockMembershipRepo) Save(ctx context.Context, ms *membership.Membership) error {
 	return m.saveFunc(ctx, ms)
 }
