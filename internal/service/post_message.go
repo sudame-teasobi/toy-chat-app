@@ -13,7 +13,7 @@ type PostMessageService struct {
 	messageRepo     message.Repository
 }
 
-func NewPostMessageService(_ context.Context, membershipQuery membership.Query, messageRepo message.Repository) *PostMessageService {
+func NewPostMessageService(membershipQuery membership.Query, messageRepo message.Repository) *PostMessageService {
 	return &PostMessageService{
 		membershipQuery: membershipQuery,
 		messageRepo:     messageRepo,

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -19,8 +18,6 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
-
 	serverPort := env.GetEnv("SERVER_PORT").Value()
 
 	host := env.GetEnv("DB_HOST").WithDefault("localhost").Value()
@@ -55,7 +52,7 @@ func main() {
 
 	membershipQuery := query.NewMembershipQuery(httpClient)
 
-	postMessageService := service.NewPostMessageService(ctx, membershipQuery, messageRepo)
+	postMessageService := service.NewPostMessageService(membershipQuery, messageRepo)
 	postMessageHandler := handler.NewPostMessageHandler(postMessageService)
 
 	e := echo.New()
