@@ -11,23 +11,6 @@ type PageInfo {
   endCursor: String
 }
 
-type Message {
-  author: String!
-  body: String!
-  postedAt: DateTime!
-}
-
-type MessageEdge {
-  node: Message!
-  cursor: String!
-}
-
-type MessageConnection {
-  edges: [MessageEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int
-}
-
 type RoomMember implements Node{
   id: ID!
   name: String!

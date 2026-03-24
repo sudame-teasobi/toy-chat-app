@@ -11,12 +11,16 @@ import (
 
 	"github.com/sudame/chat/internal/consts"
 	"github.com/sudame/chat/internal/read_api/graph"
-	"github.com/sudame/chat/internal/read_api/middleware"
 	"github.com/sudame/chat/internal/read_api/model"
 )
 
-// Rooms is the resolver for the rooms field.
-func (r *queryResolver) Rooms(ctx context.Context, first *int32, after *string, last *int32, before *string) (*model.RoomConnection, error) {
+// Author is the resolver for the author field.
+func (r *messageResolver) Author(ctx context.Context, obj *model.Message) (*model.User, error) {
+	panic(fmt.Errorf("not implemented: Author - author"))
+}
+
+// Messages is the resolver for the messages field.
+func (r *roomResolver) Messages(ctx context.Context, obj *model.Room, first *int32, after *string, last *int32, before *string) (*model.MessageConnection, error) {
 	// first と before が同時に指定されている
 	if first != nil && before != nil {
 		return nil, fmt.Errorf("invalid input: first and before")
@@ -36,69 +40,57 @@ func (r *queryResolver) Rooms(ctx context.Context, first *int32, after *string, 
 		return nil, fmt.Errorf("invalid input: no first and no last")
 	}
 
-	userID, err := middleware.GetUserID(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user ID: %w", err)
-	}
-
 	params := QueryParams{
-		PK:       "USER#" + userID,
-		SKPrefix: new("ROOM#"),
+		PK:       "ROOM#" + obj.ID,
+		SKPrefix: new("MESSAGE#"),
 		First:    first,
 		After:    after,
 		Last:     last,
 		Before:   before,
 	}
 
-	var con *Connection[JoinedRoom]
+	var con *Connection[Message]
 
 	if first != nil {
 		p := params.ToQueryForwardParams()
-		con, err = QueryForward[JoinedRoom](ctx, r.DynamoDBClient, consts.DynamoDBTableName, p)
+		var err error
+		con, err = QueryForward[Message](ctx, r.DynamoDBClient, consts.DynamoDBTableName, p)
 		if err != nil {
 			return nil, fmt.Errorf("failed to query forward: %w", err)
 		}
 	} else {
 		p := params.ToQueryBackwardParams()
-		con, err = QueryBackward[JoinedRoom](ctx, r.DynamoDBClient, consts.DynamoDBTableName, p)
+		var err error
+		con, err = QueryBackward[Message](ctx, r.DynamoDBClient, consts.DynamoDBTableName, p)
 		if err != nil {
 			return nil, fmt.Errorf("failed to query backward: %w", err)
 		}
 	}
 
-	edges := make([]*model.RoomEdge, len(con.Items))
-	for i, item := range con.Items {
+	var edges = []*model.MessageEdge{}
+	for _, item := range con.Items {
 		if item == nil || item.Node == nil {
 			continue
 		}
-		edge := model.RoomEdge{
-			Node: &model.Room{
-				ID:   item.Node.RoomID,
-				Name: "Not Implemented", // TODO: implement this
+		edge := model.MessageEdge{
+			Node: &model.Message{
+				ID:   item.Node.MessageID,
+				Body: item.Node.Body,
 			},
 			Cursor: item.Cursor,
 		}
-		edges[i] = &edge
+		edges = append(edges, &edge)
 	}
 
-	roomConnection := model.RoomConnection{
+	messageConnection := model.MessageConnection{
 		Edges:    edges,
 		PageInfo: con.PageInfo,
 	}
 
-	return &roomConnection, nil
+	return &messageConnection, nil
 }
 
-// TotalCount is the resolver for the totalCount field.
-func (r *roomConnectionResolver) TotalCount(ctx context.Context, obj *model.RoomConnection) (*int32, error) {
-	panic(fmt.Errorf("not implemented: TotalCount - totalCount"))
-}
+// Message returns graph.MessageResolver implementation.
+func (r *Resolver) Message() graph.MessageResolver { return &messageResolver{r} }
 
-// Room returns graph.RoomResolver implementation.
-func (r *Resolver) Room() graph.RoomResolver { return &roomResolver{r} }
-
-// RoomConnection returns graph.RoomConnectionResolver implementation.
-func (r *Resolver) RoomConnection() graph.RoomConnectionResolver { return &roomConnectionResolver{r} }
-
-type roomResolver struct{ *Resolver }
-type roomConnectionResolver struct{ *Resolver }
+type messageResolver struct{ *Resolver }

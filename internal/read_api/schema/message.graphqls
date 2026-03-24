@@ -1,0 +1,21 @@
+type Message implements Node{
+  id: ID!
+  body: String!
+  author: User!
+}
+
+type MessageEdge {
+  node: Message!
+  cursor: String!
+}
+
+type MessageConnection {
+  edges: [MessageEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Room {
+  messages(first: Int, after: String, last: Int, before: String): MessageConnection!
+}
+
