@@ -72,7 +72,7 @@ type Message struct {
 	MessageID string `dynamodbav:"message_id"`
 	Body      string `dynamodbav:"body"`
 	RoomID    string `dynamodbav:"room_id"`
-	UserID    string `dynamodbav:"user_Id"`
+	UserID    string `dynamodbav:"user_id"`
 }
 
 var tableName = "ToyChatApp"
@@ -187,34 +187,16 @@ func handleMessagePostedEvent(ctx context.Context, client *dynamodb.Client, even
 		PK:        "ROOM#" + event.ChatRoomID,
 		SK:        "MESSAGE#" + event.ID,
 		MessageID: event.ID,
+		Body:      event.Body,
 		RoomID:    event.ChatRoomID,
 		UserID:    event.AuthorUserID,
 	}
 	messageAv, err := attributevalue.MarshalMap(message)
 	if err != nil {
-		return fmt.Errorf("failed to marshal joined room: %w", err)
+		return fmt.Errorf("failed to marshal message: %w", err)
 	}
 
-	_, err = client.TransactWriteItems(ctx, &dynamodb.TransactWriteItemsInput{
-		TransactItems: []types.TransactWriteItem{
-			{
-				Put: &types.Put{
-					Item:                                messageAv,
-					TableName:                           &tableName,
-					ConditionExpression:                 nil,
-					ExpressionAttributeNames:            nil,
-					ExpressionAttributeValues:           nil,
-					ReturnValuesOnConditionCheckFailure: types.ReturnValuesOnConditionCheckFailureNone,
-				},
-				ConditionCheck: nil,
-				Delete:         nil,
-				Update:         nil,
-			},
-		},
-		ClientRequestToken:          nil,
-		ReturnConsumedCapacity:      types.ReturnConsumedCapacityNone,
-		ReturnItemCollectionMetrics: types.ReturnItemCollectionMetricsNone,
-	})
+	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{Item: messageAv, TableName: &tableName})
 	if err != nil {
 		return fmt.Errorf("failed to transact write items: %w", err)
 	}
