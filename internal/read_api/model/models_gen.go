@@ -7,14 +7,6 @@ type Node interface {
 	GetID() string
 }
 
-type Message struct {
-	ID   string `json:"id"`
-	Body string `json:"body"`
-}
-
-func (Message) IsNode()            {}
-func (this Message) GetID() string { return this.ID }
-
 type MessageConnection struct {
 	Edges      []*MessageEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`

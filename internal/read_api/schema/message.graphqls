@@ -1,6 +1,7 @@
 type Message implements Node{
   id: ID!
   body: String!
+  author: User!
 }
 
 type MessageEdge {

@@ -10,16 +10,13 @@ import (
 	"fmt"
 
 	"github.com/sudame/chat/internal/consts"
+	"github.com/sudame/chat/internal/read_api/graph"
 	"github.com/sudame/chat/internal/read_api/model"
 )
 
-type Message struct {
-	PK        string `dynamodbav:"PK"` // ROOM#<id>
-	SK        string `dynamodbav:"SK"` // MESSAGE#<id>
-	MessageID string `dynamodbav:"message_id"`
-	Body      string `dynamodbav:"body"`
-	RoomID    string `dynamodbav:"room_id"`
-	UserID    string `dynamodbav:"user_id"`
+// Author is the resolver for the author field.
+func (r *messageResolver) Author(ctx context.Context, obj *model.Message) (*model.User, error) {
+	panic(fmt.Errorf("not implemented: Author - author"))
 }
 
 // Messages is the resolver for the messages field.
@@ -92,3 +89,8 @@ func (r *roomResolver) Messages(ctx context.Context, obj *model.Room, first *int
 
 	return &messageConnection, nil
 }
+
+// Message returns graph.MessageResolver implementation.
+func (r *Resolver) Message() graph.MessageResolver { return &messageResolver{r} }
+
+type messageResolver struct{ *Resolver }
