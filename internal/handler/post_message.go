@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/sudame/chat/internal/domain/message"
 	"github.com/sudame/chat/internal/service"
 )
 
@@ -38,6 +40,9 @@ func (h *PostMessageHandler) Handle(c echo.Context) error {
 
 	messageID, err := h.service.Exec(c.Request().Context(), req.AuthorUserID, req.RoomID, req.Body)
 	if err != nil {
+		if errors.Is(err, message.ErrForbidden) {
+			return c.JSON(http.StatusForbidden, map[string]string{"error": fmt.Sprintf("not a member of this room: %s", err.Error())})
+		}
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("internal server errror: %s", err.Error())})
 	}
 

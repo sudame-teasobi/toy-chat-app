@@ -30,7 +30,7 @@ func (s *PostMessageService) Exec(ctx context.Context, authorUserID string, room
 		return nil, fmt.Errorf("failed to call membership service: %w", err)
 	}
 	if !membershipExistence.Existence {
-		return nil, fmt.Errorf("failed to find membership (userID = %s, roomID = %s)", authorUserID, roomID)
+		return nil, message.ErrForbidden
 	}
 
 	m, err := message.PostMessage(roomID, authorUserID, body)
