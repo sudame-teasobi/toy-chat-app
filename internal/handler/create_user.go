@@ -38,7 +38,7 @@ func (h *CreateUserHandler) Handle(c echo.Context) error {
 
 	userId, err := h.service.Exec(c.Request().Context(), req.Name)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("internal server errror: %s", err.Error())})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("internal server error: %s", err.Error())})
 	}
 
 	return c.JSON(http.StatusOK, CreateUserResponse{UserID: *userId})

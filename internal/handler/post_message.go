@@ -43,7 +43,7 @@ func (h *PostMessageHandler) Handle(c echo.Context) error {
 		if errors.Is(err, message.ErrForbidden) {
 			return c.JSON(http.StatusForbidden, map[string]string{"error": fmt.Sprintf("not a member of this room: %s", err.Error())})
 		}
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("internal server errror: %s", err.Error())})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("internal server error: %s", err.Error())})
 	}
 
 	return c.JSON(http.StatusOK, PostMessageResponse{MessageID: *messageID})
