@@ -62,9 +62,14 @@ func DecodeCursor(encodedCursor string) (map[string]types.AttributeValue, error)
 		return nil, fmt.Errorf("failed to decode base64: %w", err)
 	}
 
-	av, err := attributevalue.UnmarshalMapJSON(j)
+	var cursor Cursor
+	if err := json.Unmarshal(j, &cursor); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal json to cursor: %w", err)
+	}
+
+	av, err := attributevalue.MarshalMap(cursor)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal json to attribute value: %w", err)
+		return nil, fmt.Errorf("failed to marshal cursor to attribute value: %w", err)
 	}
 
 	return av, nil
