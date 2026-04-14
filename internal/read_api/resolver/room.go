@@ -23,8 +23,8 @@ type JoinedRoom struct {
 }
 
 type Cursor struct {
-	PK string `dynamodbav:"PK"`
-	SK string `dynamodbav:"SK"`
+	PK string `dynamodbav:"PK" json:"PK"`
+	SK string `dynamodbav:"SK" json:"SK"`
 }
 
 type QueryParams struct {
